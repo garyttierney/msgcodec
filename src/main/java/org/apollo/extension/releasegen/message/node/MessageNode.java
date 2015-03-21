@@ -24,6 +24,9 @@ public class MessageNode {
         visitor.visitEnd(this);
     }
 
+    /**
+     * An ordered list of property nodes.
+     */
     private final LinkedList<PropertyNode> propertyList = new LinkedList<>();
 
     /**
@@ -51,6 +54,11 @@ public class MessageNode {
      */
     public boolean setIdentifier(String messageIdentifier) {
         this.messageIdentifier = messageIdentifier;
+        return true;
+    }
+
+    public boolean addProperty(PropertyNode propertyNode) {
+        propertyList.addLast(propertyNode);
         return true;
     }
 

@@ -38,7 +38,6 @@ public class MessageParser extends BaseParser<Object> {
      *
      *
      * @return A rule which matches a full {@link MessageNode}.
-     * @throws ClassNotFoundException If one of the classes required by a property being parsed cannot be found. @todo - probably best to decouple this
      */
     @Label("message")
     public Rule messageNode() {
@@ -48,11 +47,10 @@ public class MessageParser extends BaseParser<Object> {
                 qualifiedIdentifier(),
                 node.setIdentifier((String) pop()),
                 zeroOrMore(
-                        sequence(attribute(), node.addAttribute((AttributeNode) pop()))
+                    sequence(attribute(), node.addAttribute((AttributeNode) pop()))
                 ),
                 oneOrMore(
-                        compoundPropertyDefinition(),
-                        propertyDefinition()
+                    sequence(firstOf(compoundPropertyDefinition(), propertyDefinition()), node.addProperty((PropertyNode) pop()))
                 ),
                 push(node)
         );
@@ -150,13 +148,13 @@ public class MessageParser extends BaseParser<Object> {
                 propertyType(), spacing(), messagePropertyNode.setType((PropertyType) pop()),
 
                 firstOf(
-                    sequence(
-                        identifier(),
-                        messagePropertyNode.setIdentifier(match()),
-                        propertyArrayInitializer(),
-                        messagePropertyNode.setType(new ArrayPropertyType(messagePropertyNode.getType(), (String) pop()))
-                    ),
-                    sequence(identifier(), messagePropertyNode.setIdentifier(match()))
+                        sequence(
+                                identifier(),
+                                messagePropertyNode.setIdentifier(match()),
+                                propertyArrayInitializer(),
+                                messagePropertyNode.setType(new ArrayPropertyType(messagePropertyNode.getType(), (String) pop()))
+                        ),
+                        sequence(identifier(), messagePropertyNode.setIdentifier(match()))
                 ),
 
                 push(messagePropertyNode),
@@ -260,10 +258,10 @@ public class MessageParser extends BaseParser<Object> {
         IntegerPropertyType intType = new IntegerPropertyType();
 
         return sequence(
-            optional(sequence(ch('u'), intType.setSigned(false))).suppressSubnodes(),
-            string("int").suppressNode(),
-            sequence(oneOrMore(digit()), intType.setBits(Integer.valueOf(match()))),
-            push(intType)
+                optional(sequence(ch('u'), intType.setSigned(false))).suppressSubnodes(),
+                string("int").suppressNode(),
+                sequence(oneOrMore(digit()), intType.setBits(Integer.valueOf(match()))),
+                push(intType)
         );
     }
 
