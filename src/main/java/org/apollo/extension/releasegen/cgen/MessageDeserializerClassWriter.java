@@ -6,10 +6,15 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
+import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
+
 import static org.objectweb.asm.Opcodes.*;
 
 
 public class MessageDeserializerClassWriter implements MessageNodeVisitor {
+    private static final Class<MessageDeserializer> deserializerInterface = MessageDeserializer.class;
+
     private final ClassVisitor cv;
     private final String className;
 
@@ -21,13 +26,13 @@ public class MessageDeserializerClassWriter implements MessageNodeVisitor {
     }
 
     @Override
-    public void visit(MessageNode messageNode) {
+    public void visit(MessageNode messageNode) throws MessageNodeVisitorException {
         String className = this.className.replace('.', '/');
         String interfaceClassName = Type.getInternalName(MessageDeserializer.class);
 
         cv.visit(V1_7,
                 ACC_PUBLIC | ACC_SUPER,
-                className, null, "java/lang/Object", new String[] { interfaceClassName }
+                className, null, Type.getInternalName(Object.class), new String[] { interfaceClassName }
         );
 
         MethodVisitor mv = cv.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
@@ -36,11 +41,18 @@ public class MessageDeserializerClassWriter implements MessageNodeVisitor {
         mv.visitVarInsn(ALOAD, 0); // push `this` to the operand stack
         mv.visitMethodInsn(INVOKESPECIAL, Type.getInternalName(Object.class), "<init>", "()V", false);
 
+        Method deserializeMethod;
+        try {
+            deserializeMethod = deserializerInterface.getMethod("deserialize", ByteBuffer.class);
+        } catch (NoSuchMethodException e) {
+            throw new MessageNodeVisitorException("Unable to find deserialize method in MessageDeserializer interface!", e);
+        }
+
         deserializeMethodWriter = new MessageDeserializerMethodWriter(
             cv.visitMethod(
                 ACC_PUBLIC,
-                "deserialize",
-                "(Ljava/nio/ByteBuffer;)Ljava/lang/Object;",
+                deserializeMethod.getName(),
+                Type.getMethodDescriptor(deserializeMethod),
                 null,
                 null
             )
@@ -50,17 +62,17 @@ public class MessageDeserializerClassWriter implements MessageNodeVisitor {
     }
 
     @Override
-    public void visitCompoundProperty(CompoundPropertyNode node) {
+    public void visitCompoundProperty(CompoundPropertyNode node) throws MessageNodeVisitorException {
         deserializeMethodWriter.visitCompoundProperty(node);
     }
 
     @Override
-    public void visitPropertyNode(PropertyNode node) {
+    public void visitPropertyNode(PropertyNode node) throws MessageNodeVisitorException {
         deserializeMethodWriter.visitPropertyNode(node);
     }
 
     @Override
-    public void visitEnd(MessageNode node) {
+    public void visitEnd(MessageNode node) throws MessageNodeVisitorException {
         deserializeMethodWriter.visitEnd(node);
     }
 

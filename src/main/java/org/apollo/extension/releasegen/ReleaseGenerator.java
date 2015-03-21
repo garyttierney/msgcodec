@@ -5,6 +5,7 @@ import org.apollo.extension.releasegen.message.MessageDeserializer;
 import org.apollo.extension.releasegen.message.MessageSerializer;
 import org.apollo.extension.releasegen.message.node.AttributeType;
 import org.apollo.extension.releasegen.message.node.MessageNode;
+import org.apollo.extension.releasegen.message.node.MessageNodeVisitorException;
 import org.apollo.extension.releasegen.message.parser.MessageParser;
 import org.objectweb.asm.ClassWriter;
 import org.parboiled.Parboiled;
@@ -16,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -24,14 +26,17 @@ public class ReleaseGenerator {
     private final MessageParser messageParser = Parboiled.createParser(MessageParser.class);
     private final Map<Integer, MessageDeserializer> deserializerMap = new HashMap<>();
     private final Map<Integer, MessageSerializer> serializerMap = new HashMap<>();
-    private final Set<Path> messageConfigPaths;
+
+    private final Set<Path> messageConfigPaths = new HashSet<>();
 
     public ReleaseGenerator(Path messageConfigPath) throws IOException {
         MessageConfigFileVisitor configFileVisitor = new MessageConfigFileVisitor();
         Files.walkFileTree(messageConfigPath, configFileVisitor);
 
-        this.messageConfigPaths = configFileVisitor.getMessageConfigPaths();
+        this.messageConfigPaths.addAll(configFileVisitor.getMessageConfigPaths());
     }
+
+    public ReleaseGenerator() {}
 
     public void init() throws ReleaseGeneratorException {
         ParseRunner<MessageNode> parseRunner = new RecoveringParseRunner<>(messageParser.messageNode());
@@ -58,7 +63,7 @@ public class ReleaseGenerator {
                     } else {
                         throw new ReleaseGeneratorException("Got an unknown type \"" + type + "\" for message \"" + node.getIdentifier() + "\"");
                     }
-                } catch (IllegalAccessException | InstantiationException ex) {
+                } catch (Exception ex) {
                     throw new ReleaseGeneratorException("Error occurred when creating serializer or deserializer for \"" + node.getIdentifier() + "\"", ex);
                 }
 
@@ -76,18 +81,26 @@ public class ReleaseGenerator {
         return null;
     }
 
-    public MessageDeserializer createMessageDeserializer(MessageNode node) throws IllegalAccessException, InstantiationException {
+    public MessageDeserializer createMessageDeserializer(MessageNode node) throws IllegalAccessException, InstantiationException, MessageNodeVisitorException {
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
-
-        String deserializerClassName = node.getIdentifier() + "_Deserializer";
-        node.accept(new MessageDeserializerClassWriter(deserializerClassName, cw));
-
+        String deserializerClassName = node.getIdentifier() + "Deserializer";
+        {
+            node.accept(new MessageDeserializerClassWriter(deserializerClassName, cw));
+        }
         cw.visitEnd();
 
         byte[] classBytes = cw.toByteArray();
         Class<?> clazz = classLoader.defineClassProxy(deserializerClassName, classBytes, 0, classBytes.length);
 
         return (MessageDeserializer) clazz.newInstance();
+    }
+
+    public MessageDeserializer getMessageDeserializer(int opcode) {
+        return deserializerMap.get(opcode);
+    }
+
+    public MessageSerializer getMessageSerializer(int opcode) {
+        return serializerMap.get(opcode);
     }
 
 }

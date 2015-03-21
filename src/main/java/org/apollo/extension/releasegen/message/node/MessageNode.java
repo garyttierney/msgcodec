@@ -10,7 +10,7 @@ public class MessageNode {
      *
      * @param visitor The MessageNodeVisitor to call.
      */
-    public void accept(MessageNodeVisitor visitor) {
+    public void accept(MessageNodeVisitor visitor) throws MessageNodeVisitorException {
         visitor.visit(this);
 
         for(PropertyNode property : propertyList) {
@@ -57,20 +57,43 @@ public class MessageNode {
         return true;
     }
 
+    /**
+     * Parser action to add a new {@link PropertyNode} to the property list.
+     *
+     * @param propertyNode The property node to add.
+     */
     public boolean addProperty(PropertyNode propertyNode) {
         propertyList.addLast(propertyNode);
         return true;
     }
 
+
+    /**
+     * Parser action to add a new {@link AttributeNode} to the attribute map.
+     *
+     * @param attributeNode The attribute node to add.
+     */
     public boolean addAttribute(AttributeNode attributeNode) {
         this.attributeNodeMap.put(attributeNode.getIdentifier(), attributeNode);
         return true;
     }
 
+    /**
+     * Checks if a attribute with the specified identifier is available.
+     *
+     * @param identifier The identifier.
+     * @return True if the attribute exists, false otherwise.
+     */
     public boolean hasAttribute(String identifier) {
         return attributeNodeMap.containsKey(identifier);
     }
 
+    /**
+     * Returns the {@link AttributeNode} with the specified identifier.
+     *
+     * @param identifier The identifier.
+     * @return The attribute node.
+     */
     public AttributeNode getAttribute(String identifier) {
         return attributeNodeMap.get(identifier);
     }
