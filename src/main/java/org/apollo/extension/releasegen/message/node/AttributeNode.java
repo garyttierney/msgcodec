@@ -1,4 +1,4 @@
-package org.apollo.extension.releasegen.parser.message.node;
+package org.apollo.extension.releasegen.message.node;
 
 public class AttributeNode {
 

@@ -1,9 +1,31 @@
-package org.apollo.extension.releasegen.parser.message.node;
+package org.apollo.extension.releasegen.message.node;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 
 public class MessageNode {
+    /**
+     * Accept a {@link MessageNodeVisitor} and iterate call the {@link MessageNodeVisitor#visit} methods on this object and all of its properties.
+     *
+     * @param visitor The MessageNodeVisitor to call.
+     */
+    public void accept(MessageNodeVisitor visitor) {
+        visitor.visit(this);
+
+        for(PropertyNode property : propertyList) {
+            if(property instanceof CompoundPropertyNode) {
+                visitor.visitCompoundProperty((CompoundPropertyNode) property);
+            } else {
+                visitor.visitPropertyNode(property);
+            }
+        }
+
+        visitor.visitEnd(this);
+    }
+
+    private final LinkedList<PropertyNode> propertyList = new LinkedList<>();
+
     /**
      * The Message class this MessageNode represents.
      */

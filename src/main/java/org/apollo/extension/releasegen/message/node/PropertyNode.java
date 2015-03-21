@@ -1,6 +1,6 @@
-package org.apollo.extension.releasegen.parser.message.node;
+package org.apollo.extension.releasegen.message.node;
 
-import org.apollo.extension.releasegen.parser.message.property.PropertyType;
+import org.apollo.extension.releasegen.message.property.PropertyType;
 
 public class PropertyNode {
     private PropertyType type;

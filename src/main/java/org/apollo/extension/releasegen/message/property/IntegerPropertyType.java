@@ -1,4 +1,4 @@
-package org.apollo.extension.releasegen.parser.message.property;
+package org.apollo.extension.releasegen.message.property;
 
 public class IntegerPropertyType implements PropertyType {
     private int bits;

@@ -1,4 +1,4 @@
-package org.apollo.extension.releasegen.parser.message.property;
+package org.apollo.extension.releasegen.message.property;
 
 import java.lang.reflect.Array;
 
@@ -27,6 +27,6 @@ public class ArrayPropertyType implements PropertyType{
 
     @Override
     public Class<?> getType() {
-        return Array.newInstance(elementType.getType()).getClass();
+        return Array.newInstance(elementType.getType(), 1).getClass();
     }
 }
