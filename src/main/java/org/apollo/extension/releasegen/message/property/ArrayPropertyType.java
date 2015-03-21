@@ -25,8 +25,12 @@ public class ArrayPropertyType implements PropertyType{
         this.lengthSpecifier = lengthSpecifier;
     }
 
+    public PropertyType getElementType() {
+        return elementType;
+    }
+
     @Override
-    public Class<?> getType() {
+    public Class<?> getType() throws ClassNotFoundException {
         return Array.newInstance(elementType.getType(), 1).getClass();
     }
 }

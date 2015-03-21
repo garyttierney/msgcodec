@@ -31,8 +31,8 @@ public class MessageDeserializerClassWriter implements MessageNodeVisitor {
         String interfaceClassName = Type.getInternalName(MessageDeserializer.class);
 
         cv.visit(V1_7,
-                ACC_PUBLIC | ACC_SUPER,
-                className, null, Type.getInternalName(Object.class), new String[] { interfaceClassName }
+            ACC_PUBLIC | ACC_SUPER,
+            className, null, Type.getInternalName(Object.class), new String[] { interfaceClassName }
         );
 
         MethodVisitor mv = cv.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
@@ -74,6 +74,7 @@ public class MessageDeserializerClassWriter implements MessageNodeVisitor {
     @Override
     public void visitEnd(MessageNode node) throws MessageNodeVisitorException {
         deserializeMethodWriter.visitEnd(node);
+        cv.visitEnd();
     }
 
 }

@@ -21,4 +21,6 @@ public class MessageUtils {
     public static String getByteBufferReadMethod(IntegerPropertyType type) {
         return getByteBufferWriteMethod(type).replace("put", "get");
     }
+
+
 }
