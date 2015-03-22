@@ -1,6 +1,6 @@
 package sfix.msgcodec.message.codec;
 
-public class MessageCodecFactoryException extends Exception {
+public class MessageSerializerFactoryException extends Exception {
     /**
      * Constructs a new exception with the specified detail message.  The
      * cause is not initialized, and may subsequently be initialized by
@@ -9,7 +9,7 @@ public class MessageCodecFactoryException extends Exception {
      * @param message the detail message. The detail message is saved for
      *                later retrieval by the {@link #getMessage()} method.
      */
-    public MessageCodecFactoryException(String message) {
+    public MessageSerializerFactoryException(String message) {
         super(message);
     }
 
@@ -27,7 +27,7 @@ public class MessageCodecFactoryException extends Exception {
      *                unknown.)
      * @since 1.4
      */
-    public MessageCodecFactoryException(String message, Throwable cause) {
+    public MessageSerializerFactoryException(String message, Throwable cause) {
         super(message, cause);
     }
 }

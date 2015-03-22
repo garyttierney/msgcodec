@@ -4,12 +4,17 @@ import io.netty.buffer.ByteBuf;
 
 import java.util.Map;
 
-public class MessageCodec {
+/**
+ * A codec implementation which handles serialization and deserialization of messages.
+ *
+ * @param <D> The discriminator type for messages handled by this codec.
+ */
+public class MessageCodec<D> {
 
-    private final Map<Integer, MessageDeserializer> deserializerMap;
+    private final Map<D, MessageDeserializer> deserializerMap;
     private final Map<Class<?>, MessageSerializer> serializerMap;
 
-    public MessageCodec(Map<Integer, MessageDeserializer> deserializerMap, Map<Class<?>, MessageSerializer> serializerMap) {
+    public MessageCodec(Map<D, MessageDeserializer> deserializerMap, Map<Class<?>, MessageSerializer> serializerMap) {
         this.deserializerMap = deserializerMap;
         this.serializerMap = serializerMap;
     }
@@ -19,7 +24,7 @@ public class MessageCodec {
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T deserialize(int opcode, ByteBuf buffer) {
-        return (T) deserializerMap.get(opcode).deserialize(buffer);
+    public <T> T deserialize(D discriminator, ByteBuf buffer) {
+        return (T) deserializerMap.get(discriminator).deserialize(buffer);
     }
 }

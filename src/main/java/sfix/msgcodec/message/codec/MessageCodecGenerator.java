@@ -19,7 +19,14 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * This class is responsible for generating parsing a set of message configuration files and creating a {@link MessageCodec} instance.
+ */
 public class MessageCodecGenerator {
+
+    /**
+     * FileVisitor for walking a directory structure and finding message configuration files.
+     */
     private static class MessageConfigFileVisitor extends SimpleFileVisitor<Path> {
         public Set<Path> messageConfigPaths = new HashSet<>();
 
@@ -40,20 +47,47 @@ public class MessageCodecGenerator {
         }
     }
 
+    /**
+     * The message configuration parser instance.
+     */
     private final MessageParser messageParser = Parboiled.createParser(MessageParser.class);
-    private final MessageCodecFactory messageCodecFactory;
 
+    /**
+     * The message (de)serializer factory.
+     */
+    private final MessageSerializerFactory messageSerializerFactory;
+
+    /**
+     * A set of files to be parsed by the {@link MessageParser}.
+     */
     private final Set<Path> messageConfigPaths = new HashSet<>();
 
-    public MessageCodecGenerator(MessageCodecFactory messageCodecFactory, Path messageConfigPath) throws IOException {
+    /**
+     * Create a new {@link MessageCodec} generator using <code>messageConfigPath</code> as a search path for message configuration files,
+     * and <code>messageSerializerFactory</code> as the factory for creating message (de)serializers.
+     *
+     * @param messageSerializerFactory The message serializer factory responsible for creating message serializers and deserializers.
+     * @param messageConfigPath The path to search for message configuration files.
+     *
+     * @throws IOException If an error occurred when searching the message configuration path.
+     * @see sfix.msgcodec.message.codec.cgen.ASM5MessageSerializerFactory
+     * @see sfix.msgcodec.message.codec.reflection.ReflectionMessageSerializerFactory
+     */
+    public MessageCodecGenerator(MessageSerializerFactory messageSerializerFactory, Path messageConfigPath) throws IOException {
         MessageConfigFileVisitor configFileVisitor = new MessageConfigFileVisitor();
         Files.walkFileTree(messageConfigPath, configFileVisitor);
 
         this.messageConfigPaths.addAll(configFileVisitor.getMessageConfigPaths());
-        this.messageCodecFactory = messageCodecFactory;
+        this.messageSerializerFactory = messageSerializerFactory;
     }
 
-    public MessageCodec generate() throws MessageCodecGeneratorException {
+    /**
+     * Generate MessageCodec using an integer attribute named "opcode" as the message discriminator.
+     *
+     * @return An instance of MessageCodec with an Integer as the discriminator.
+     * @throws MessageCodecGeneratorException If an error occurred when generating the MessageCodec.
+     */
+    public MessageCodec<Integer> generate() throws MessageCodecGeneratorException {
         ParseRunner<MessageNode> parseRunner = new RecoveringParseRunner<>(messageParser.messageNode());
 
         final Map<Integer, MessageDeserializer> deserializerMap = new HashMap<>();
@@ -76,9 +110,9 @@ public class MessageCodecGenerator {
 
                 try {
                     if (type.equalsIgnoreCase("outgoing")) {
-                        serializerMap.put(Class.forName(node.getIdentifier()), messageCodecFactory.createSerializer(node));
+                        serializerMap.put(Class.forName(node.getIdentifier()), messageSerializerFactory.createSerializer(node));
                     } else if (type.equalsIgnoreCase("incoming")) {
-                        deserializerMap.put(opcode, messageCodecFactory.createDeserializer(node));
+                        deserializerMap.put(opcode, messageSerializerFactory.createDeserializer(node));
                     } else {
                         throw new MessageCodecGeneratorException("Got an unknown type \"" + type + "\" for message \"" + node.getIdentifier() + "\"");
                     }
@@ -91,6 +125,6 @@ public class MessageCodecGenerator {
             }
         }
 
-        return new MessageCodec(deserializerMap, serializerMap);
+        return new MessageCodec<>(deserializerMap, serializerMap);
     }
 }

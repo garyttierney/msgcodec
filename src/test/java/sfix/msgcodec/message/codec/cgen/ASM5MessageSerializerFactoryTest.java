@@ -3,7 +3,7 @@ package sfix.msgcodec.message.codec.cgen;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import sfix.msgcodec.io.DataType;
-import sfix.msgcodec.message.codec.MessageCodecFactory;
+import sfix.msgcodec.message.codec.MessageSerializerFactory;
 import sfix.msgcodec.message.codec.MessageDeserializer;
 import sfix.msgcodec.message.TestMessage;
 import sfix.msgcodec.message.node.CompoundPropertyNode;
@@ -16,7 +16,7 @@ import sfix.msgcodec.message.property.SimplePropertyType;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class ASM5MessageCodecFactoryTest {
+public class ASM5MessageSerializerFactoryTest {
     @Test
     public void testCreateMessageDeserializer() throws Exception {
         MessageNode node = new MessageNode();
@@ -100,7 +100,7 @@ public class ASM5MessageCodecFactoryTest {
 
         }
 
-        MessageCodecFactory codecFactory = new ASM5MessageCodecFactory();
+        MessageSerializerFactory codecFactory = new ASM5MessageSerializerFactory();
         MessageDeserializer deserializer = codecFactory.createDeserializer(node);
 
         ByteBuf buffer = Unpooled.buffer();
