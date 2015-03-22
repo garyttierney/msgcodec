@@ -14,7 +14,6 @@ import java.lang.reflect.Method;
 
 import static org.objectweb.asm.Opcodes.*;
 
-
 public class MessageDeserializerClassWriter implements MessageNodeVisitor {
     private static final Class<MessageDeserializer> deserializerInterface = MessageDeserializer.class;
 
