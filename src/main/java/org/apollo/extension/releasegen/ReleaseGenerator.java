@@ -86,6 +86,18 @@ public class ReleaseGenerator {
         return null;
     }
 
+
+    public static String insnToString(AbstractInsnNode insn){
+        insn.accept(mp);
+        StringWriter sw = new StringWriter();
+        printer.print(new PrintWriter(sw));
+        printer.getText().clear();
+        return sw.toString();
+    }
+
+    private static Printer printer = new Textifier();
+    private static TraceMethodVisitor mp = new TraceMethodVisitor(printer);
+
     public MessageDeserializer createMessageDeserializer(MessageNode node) throws IllegalAccessException, InstantiationException, MessageNodeVisitorException {
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         String deserializerClassName = node.getIdentifier() + "Deserializer";

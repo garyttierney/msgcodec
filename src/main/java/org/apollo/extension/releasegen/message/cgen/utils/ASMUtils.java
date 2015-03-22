@@ -1,4 +1,4 @@
-package org.apollo.extension.releasegen.cgen.utils;
+package org.apollo.extension.releasegen.message.cgen.utils;
 
 import org.objectweb.asm.Opcodes;
 

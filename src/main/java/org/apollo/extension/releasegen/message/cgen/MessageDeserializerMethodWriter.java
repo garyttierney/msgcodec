@@ -1,7 +1,8 @@
-package org.apollo.extension.releasegen.cgen;
+package org.apollo.extension.releasegen.message.cgen;
 
-import org.apollo.extension.releasegen.cgen.utils.LocalVarManager;
-import org.apollo.extension.releasegen.cgen.utils.ASMUtils;
+import org.apollo.extension.releasegen.message.cgen.utils.ASMUtils;
+import org.apollo.extension.releasegen.message.cgen.utils.LocalVarManager;
+import org.apollo.extension.releasegen.io.GamePacketReaderFactory;
 import org.apollo.extension.releasegen.message.node.*;
 import org.apollo.extension.releasegen.message.property.ArrayPropertyType;
 import org.apollo.extension.releasegen.message.property.IntegerPropertyType;
@@ -19,7 +20,7 @@ import java.nio.ByteBuffer;
 
 import static org.objectweb.asm.Opcodes.*;
 
-public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
+public class MessageDeserializerMethodWriter<D> implements MessageNodeVisitor {
     /**
      * Constant for the buffer parameter slot
      */
@@ -44,6 +45,10 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
      * Reference to the ASM MethodVisitor which generates the code for the {@link org.apollo.extension.releasegen.message.MessageDeserializer#deserialize} method.
      */
     private final MethodVisitor methodWriter;
+
+    /**
+     * The method reference resolver which is responsible for looking up methods required to complete read operations.
+     */
     private final MethodReferenceResolver methodResolver;
 
     /**
@@ -71,7 +76,12 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
      */
     private Class<?> messageClass;
 
-    public MessageDeserializerMethodWriter(MethodVisitor writer, MethodReferenceResolver methodResolver) {
+    public MessageDeserializerMethodWriter(
+        MethodVisitor writer,
+        MethodReferenceResolver methodResolver,
+        Class<D> serializedDataClass,
+        Class<? extends GamePacketReaderFactory<D>> readerFactoryClass
+    ) {
         this.methodWriter = writer;
         this.methodResolver = methodResolver;
         this.localVarManager = new LocalVarManager(writer, startLabel, endLabel);

@@ -1,4 +1,4 @@
-package org.apollo.extension.releasegen.cgen;
+package org.apollo.extension.releasegen.message.cgen;
 
 import java.lang.reflect.Method;
 

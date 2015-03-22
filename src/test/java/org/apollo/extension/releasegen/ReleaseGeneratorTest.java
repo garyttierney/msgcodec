@@ -1,6 +1,6 @@
 package org.apollo.extension.releasegen;
 
-import org.apollo.extension.releasegen.cgen.ByteBufferMethodReferenceResolver;
+import org.apollo.extension.releasegen.message.cgen.ByteBufferMethodReferenceResolver;
 import org.apollo.extension.releasegen.message.MessageDeserializer;
 import org.apollo.extension.releasegen.message.TestMessage;
 import org.apollo.extension.releasegen.message.node.CompoundPropertyNode;
@@ -14,7 +14,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 public class ReleaseGeneratorTest {
 

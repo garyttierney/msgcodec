@@ -1,5 +1,6 @@
 package org.apollo.extension.releasegen.message.parser;
 
+import org.apollo.extension.releasegen.io.DataOrder;
 import org.apollo.extension.releasegen.message.node.*;
 import org.apollo.extension.releasegen.message.property.ArrayPropertyType;
 import org.apollo.extension.releasegen.message.property.IntegerPropertyType;
@@ -11,6 +12,8 @@ import org.parboiled.annotations.BuildParseTree;
 import org.parboiled.annotations.Label;
 import org.parboiled.annotations.SuppressNode;
 
+import java.util.Set;
+
 @BuildParseTree
 public class MessageParser extends BaseParser<Object> {
     public Rule SEMICOLON = ch(';').skipNode();
@@ -19,6 +22,7 @@ public class MessageParser extends BaseParser<Object> {
     public Rule RBRACE = ch('}').skipNode();
     public Rule LBRACKET = ch('[').suppressNode();
     public Rule RBRACKET = ch(']').suppressNode();
+    public Rule UNDERSCORE = ch('_').suppressNode();
 
 
     /**
@@ -270,8 +274,20 @@ public class MessageParser extends BaseParser<Object> {
             optional(sequence(ch('u'), intType.setSigned(false))).suppressSubnodes(),
             string("int").suppressNode(),
             sequence(oneOrMore(digit()), intType.setBits(Integer.valueOf(match()))),
+            optional(sequence(intTypeDataOrder(), intType.setDataOrder((DataOrder) pop()))),
             push(intType)
         );
+    }
+
+    public Rule intTypeDataOrder() {
+        String[] orderIdentifiers = DataOrder.identifiers();
+        Rule[] orderRules = new Rule[orderIdentifiers.length];
+
+        for(int i = 0; i < orderRules.length; i++) {
+            orderRules[i] = string(orderIdentifiers[i]);
+        }
+
+        return sequence(UNDERSCORE, firstOf(orderRules), push(DataOrder.from(match())));
     }
 
     /**

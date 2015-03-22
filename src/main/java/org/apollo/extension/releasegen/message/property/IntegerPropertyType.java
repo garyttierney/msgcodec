@@ -1,8 +1,23 @@
 package org.apollo.extension.releasegen.message.property;
 
+import org.apollo.extension.releasegen.io.DataOrder;
+
 public class IntegerPropertyType implements PropertyType {
+
+    /**
+     * The bit width of this property.
+     */
     private int bits;
+
+    /**
+     * Whether or not this value should be read as a signed or unsigned value.
+     */
     private boolean signed = true;
+
+    /**
+     * The ordering of this Integer property, defaults to big endian.
+     */
+    private DataOrder dataOrder = DataOrder.BIG_ENDIAN;
 
     public boolean isSigned() {
         return signed;
@@ -38,5 +53,14 @@ public class IntegerPropertyType implements PropertyType {
         }
 
         return long.class;
+    }
+
+    public boolean setDataOrder(DataOrder dataOrder) {
+        this.dataOrder = dataOrder;
+        return true;
+    }
+
+    public DataOrder getDataOrder() {
+        return dataOrder;
     }
 }

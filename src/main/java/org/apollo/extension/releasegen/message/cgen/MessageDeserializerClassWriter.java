@@ -1,5 +1,6 @@
-package org.apollo.extension.releasegen.cgen;
+package org.apollo.extension.releasegen.message.cgen;
 
+import org.apollo.extension.releasegen.io.GamePacketReaderFactory;
 import org.apollo.extension.releasegen.message.MessageDeserializer;
 import org.apollo.extension.releasegen.message.node.MessageNode;
 import org.apollo.extension.releasegen.message.node.MessageNodeVisitor;
@@ -11,24 +12,33 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
 import java.lang.reflect.Method;
-import java.nio.ByteBuffer;
 
 import static org.objectweb.asm.Opcodes.*;
 
 
-public class MessageDeserializerClassWriter implements MessageNodeVisitor {
+public class MessageDeserializerClassWriter<I> implements MessageNodeVisitor {
     private static final Class<MessageDeserializer> deserializerInterface = MessageDeserializer.class;
 
     private final ClassVisitor cv;
     private final String className;
     private final MethodReferenceResolver methodReferenceResolver;
+    private final Class<? extends GamePacketReaderFactory<I>> readerFactoryClass;
+    private final Class<I> inputClass;
 
     private MessageDeserializerMethodWriter deserializeMethodWriter;
 
-    public MessageDeserializerClassWriter(String className, ClassVisitor classVisitor, MethodReferenceResolver methodReferenceResolver) {
+    public MessageDeserializerClassWriter(
+        String className,
+        ClassVisitor classVisitor,
+        MethodReferenceResolver methodReferenceResolver,
+        Class<? extends GamePacketReaderFactory<I>> readerFactoryClass,
+        Class<I> inputClass
+    ) {
         this.cv = classVisitor;
         this.className = className;
         this.methodReferenceResolver = methodReferenceResolver;
+        this.readerFactoryClass = readerFactoryClass;
+        this.inputClass = inputClass;
     }
 
     @Override
@@ -41,19 +51,26 @@ public class MessageDeserializerClassWriter implements MessageNodeVisitor {
             className, null, Type.getInternalName(Object.class), new String[] { interfaceClassName }
         );
 
-        MethodVisitor mv;
-        try {
-            mv = cv.visitMethod(ACC_PUBLIC, "<init>", Type.getConstructorDescriptor(Object.class.getConstructor()), null, null);
-        } catch (NoSuchMethodException e) {
-            throw new MessageNodeVisitorException("Failed to get Object.<init> method", e);
-        }
+        cv.visitField(ACC_PRIVATE, "readerFactory", Type.getDescriptor(readerFactoryClass), null, null);
 
+        MethodVisitor mv = cv.visitMethod(ACC_PUBLIC, "<init>", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(readerFactoryClass)), null, null);
         Label startLabel = new Label();
         Label endLabel = new Label();
 
         mv.visitCode();
         mv.visitVarInsn(ALOAD, 0); // push `this` to the operand stack
-        mv.visitMethodInsn(INVOKESPECIAL, Type.getInternalName(Object.class), "<init>", "()V", false);
+        mv.visitMethodInsn( // call super constructor
+            INVOKESPECIAL,
+            Type.getInternalName(Object.class),
+            "<init>",
+            Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(readerFactoryClass)),
+            false
+        );
+
+        mv.visitVarInsn(ALOAD, 0); // push `this` to the operand stack
+        mv.visitVarInsn(ALOAD, 1); // push reader factory arg to the stack
+        mv.visitFieldInsn(PUTFIELD, className, "readerFactory", Type.getDescriptor(readerFactoryClass));
+
         mv.visitInsn(RETURN);
         mv.visitLocalVariable("this", "L" + className + ";", null, startLabel, endLabel, 0);
         mv.visitMaxs(1, 1);
@@ -61,12 +78,12 @@ public class MessageDeserializerClassWriter implements MessageNodeVisitor {
 
         Method deserializeMethod;
         try {
-            deserializeMethod = deserializerInterface.getMethod("deserialize", ByteBuffer.class);
+            deserializeMethod = deserializerInterface.getMethod("deserialize", inputClass);
         } catch (NoSuchMethodException e) {
             throw new MessageNodeVisitorException("Unable to find deserialize method in MessageDeserializer interface!", e);
         }
 
-        deserializeMethodWriter = new MessageDeserializerMethodWriter(
+        deserializeMethodWriter = new MessageDeserializerMethodWriter<>(
             cv.visitMethod(
                 ACC_PUBLIC,
                 deserializeMethod.getName(),
@@ -74,7 +91,9 @@ public class MessageDeserializerClassWriter implements MessageNodeVisitor {
                 null,
                 null
             ),
-            methodReferenceResolver
+            methodReferenceResolver,
+            inputClass,
+            readerFactoryClass
         );
 
         deserializeMethodWriter.visit(messageNode);

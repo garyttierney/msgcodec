@@ -1,4 +1,4 @@
-package org.apollo.extension.releasegen.cgen;
+package org.apollo.extension.releasegen.message.cgen;
 
 import org.apollo.extension.releasegen.message.property.IntegerPropertyType;
 import org.apollo.extension.releasegen.message.property.PropertyType;
