@@ -1,14 +1,17 @@
 package sfix.msgcodec.message.codec.cgen;
 
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Type;
+import sfix.msgcodec.io.DataOrder;
+import sfix.msgcodec.io.DataTransformation;
+import sfix.msgcodec.io.DataType;
 import sfix.msgcodec.message.codec.cgen.utils.ASMUtils;
 import sfix.msgcodec.message.codec.cgen.utils.LocalVarManager;
 import sfix.msgcodec.message.node.*;
 import sfix.msgcodec.message.property.ArrayPropertyType;
 import sfix.msgcodec.message.property.IntegerPropertyType;
 import sfix.msgcodec.message.property.PropertyType;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Type;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
@@ -143,6 +146,18 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
         Method method = ref.getMethod();
 
         methodWriter.visitVarInsn(ALOAD, BUFFER_SLOT);
+        if (type instanceof IntegerPropertyType) {
+            IntegerPropertyType intType = (IntegerPropertyType) type;
+            methodWriter.visitFieldInsn(PUTSTATIC, Type.getInternalName(DataType.class), intType.getDataType().name(), Type.getDescriptor(DataType.class));
+            methodWriter.visitFieldInsn(PUTSTATIC, Type.getInternalName(DataOrder.class), intType.getDataOrder().name(), Type.getDescriptor(DataOrder.class));
+            methodWriter.visitFieldInsn(
+                PUTSTATIC,
+                Type.getInternalName(DataTransformation.class),
+                intType.getDataTransformation().name(),
+                Type.getDescriptor(DataTransformation.class)
+            );
+        }
+
         methodWriter.visitMethodInsn(
             INVOKEVIRTUAL,
             Type.getInternalName(ref.getOwner()),
