@@ -28,7 +28,6 @@ public class MessageParserTest {
         System.err.println(ParseTreeUtils.printNodeTree(result));
         Assert.assertEquals("org.apollo.message.TestMessage", message.getIdentifier());
         Assert.assertEquals(2, message.getPropertyList().size());
-
     }
 
     @Test
@@ -82,19 +81,18 @@ public class MessageParserTest {
         PropertyNode attribute = (PropertyNode) result.resultValue;
 
         Assert.assertTrue(attribute.getType() instanceof IntegerPropertyType);
-
     }
 
     @Test
     public void testPropertyDefinition_Array() throws Exception {
         String input = "int32 test[10];";
         ParsingResult<?> result = new RecoveringParseRunner<MessageNode>(parser.propertyDefinition()).run(input);
-        PropertyNode attribute = (PropertyNode) result.resultValue;
+        PropertyNode propertyNode = (PropertyNode) result.resultValue;
 
-        Assert.assertTrue(attribute.getType() instanceof ArrayPropertyType);
-        Assert.assertEquals(attribute.getIdentifier(), "test");
+        Assert.assertTrue(propertyNode.getType() instanceof ArrayPropertyType);
+        Assert.assertEquals(propertyNode.getIdentifier(), "test");
 
-        ArrayPropertyType arrayType = (ArrayPropertyType) attribute.getType();
+        ArrayPropertyType arrayType = (ArrayPropertyType) propertyNode.getType();
         Assert.assertEquals("10", arrayType.getLengthSpecifier());
         Assert.assertEquals(int[].class, arrayType.getType());
     }
@@ -136,9 +134,9 @@ public class MessageParserTest {
     public void testPropertyType_Uint32() throws Exception {
         String input = "uint32";
         ParsingResult<?> result = new RecoveringParseRunner<MessageNode>(parser.propertyType()).run(input);
-        IntegerPropertyType attribute = (IntegerPropertyType) result.resultValue;
+        IntegerPropertyType type = (IntegerPropertyType) result.resultValue;
 
-        Assert.assertEquals(32, attribute.getBits());
-        Assert.assertFalse(attribute.isSigned());
+        Assert.assertEquals(32, type.getBits());
+        Assert.assertFalse(type.isSigned());
     }
 }
