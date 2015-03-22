@@ -14,11 +14,7 @@ public class MessageNode {
         visitor.visit(this);
 
         for(PropertyNode property : propertyList) {
-            if(property instanceof CompoundPropertyNode) {
-                visitor.visitCompoundProperty((CompoundPropertyNode) property);
-            } else {
-                visitor.visitPropertyNode(property);
-            }
+            visitor.visitPropertyNode(property);
         }
 
         visitor.visitEnd(this);

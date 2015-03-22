@@ -1,5 +1,6 @@
 package org.apollo.extension.releasegen.message.node;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,5 +19,9 @@ public class CompoundPropertyNode extends PropertyNode {
 
     public boolean hasChild(String identifier) {
         return children.containsKey(identifier);
+    }
+
+    public Collection<PropertyNode> getChildren() {
+        return children.values();
     }
 }

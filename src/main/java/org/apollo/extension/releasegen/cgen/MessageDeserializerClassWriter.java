@@ -1,8 +1,12 @@
 package org.apollo.extension.releasegen.cgen;
 
 import org.apollo.extension.releasegen.message.MessageDeserializer;
-import org.apollo.extension.releasegen.message.node.*;
+import org.apollo.extension.releasegen.message.node.MessageNode;
+import org.apollo.extension.releasegen.message.node.MessageNodeVisitor;
+import org.apollo.extension.releasegen.message.node.MessageNodeVisitorException;
+import org.apollo.extension.releasegen.message.node.PropertyNode;
 import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
@@ -17,12 +21,14 @@ public class MessageDeserializerClassWriter implements MessageNodeVisitor {
 
     private final ClassVisitor cv;
     private final String className;
+    private final MethodReferenceResolver methodReferenceResolver;
 
     private MessageDeserializerMethodWriter deserializeMethodWriter;
 
-    public MessageDeserializerClassWriter(String className, ClassVisitor classVisitor) {
+    public MessageDeserializerClassWriter(String className, ClassVisitor classVisitor, MethodReferenceResolver methodReferenceResolver) {
         this.cv = classVisitor;
         this.className = className;
+        this.methodReferenceResolver = methodReferenceResolver;
     }
 
     @Override
@@ -35,11 +41,23 @@ public class MessageDeserializerClassWriter implements MessageNodeVisitor {
             className, null, Type.getInternalName(Object.class), new String[] { interfaceClassName }
         );
 
-        MethodVisitor mv = cv.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
+        MethodVisitor mv;
+        try {
+            mv = cv.visitMethod(ACC_PUBLIC, "<init>", Type.getConstructorDescriptor(Object.class.getConstructor()), null, null);
+        } catch (NoSuchMethodException e) {
+            throw new MessageNodeVisitorException("Failed to get Object.<init> method", e);
+        }
 
-        mv.visitMaxs(1, 1);
+        Label startLabel = new Label();
+        Label endLabel = new Label();
+
+        mv.visitCode();
         mv.visitVarInsn(ALOAD, 0); // push `this` to the operand stack
         mv.visitMethodInsn(INVOKESPECIAL, Type.getInternalName(Object.class), "<init>", "()V", false);
+        mv.visitInsn(RETURN);
+        mv.visitLocalVariable("this", "L" + className + ";", null, startLabel, endLabel, 0);
+        mv.visitMaxs(1, 1);
+        mv.visitEnd();
 
         Method deserializeMethod;
         try {
@@ -55,15 +73,11 @@ public class MessageDeserializerClassWriter implements MessageNodeVisitor {
                 Type.getMethodDescriptor(deserializeMethod),
                 null,
                 null
-            )
+            ),
+            methodReferenceResolver
         );
 
         deserializeMethodWriter.visit(messageNode);
-    }
-
-    @Override
-    public void visitCompoundProperty(CompoundPropertyNode node) throws MessageNodeVisitorException {
-        deserializeMethodWriter.visitCompoundProperty(node);
     }
 
     @Override

@@ -1,8 +1,8 @@
 package org.apollo.extension.releasegen.cgen.utils;
 
-import org.apollo.extension.releasegen.message.node.PropertyNode;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import java.util.HashSet;
@@ -14,7 +14,7 @@ public class LocalVarManager {
     private final Label methodEndLabel;
     private Set<LocalVarEntry> localVarEntries = new HashSet<>();
 
-    private int localVarCount = 1;
+    private int localVarCount = 3;
 
     public LocalVarManager(MethodVisitor methodVisitor, Label methodStartLabel, Label methodEndLabel) {
         this.methodVisitor = methodVisitor;
@@ -22,6 +22,14 @@ public class LocalVarManager {
         this.methodEndLabel = methodEndLabel;
     }
 
+    public int getOrAllocate(String name, Class<?> type) {
+        LocalVarEntry entry = findByName(name);
+        if (entry != null) {
+            return entry.slot;
+        }
+
+        return allocate(name, type);
+    }
 
     public int allocate(String name, Class<?> type) {
         return allocate(name, type, null, null);
@@ -34,6 +42,8 @@ public class LocalVarManager {
         entry.name = name;
         entry.startLabel = startLabel;
         entry.endLabel = endLabel;
+
+        localVarEntries.add(entry);
 
         return entry.slot;
     }
@@ -48,16 +58,16 @@ public class LocalVarManager {
         store(entry);
     }
 
-    public void store(PropertyNode node) {
-        store(node.getIdentifier());
-    }
-
     public void store(LocalVarEntry entry) {
-
-    }
+        if (int.class.isAssignableFrom(entry.type)) {
+            methodVisitor.visitVarInsn(Opcodes.ISTORE, entry.slot);
+        }
+     }
 
     public void push(LocalVarEntry entry) {
-
+        if (int.class.isAssignableFrom(entry.type)) {
+            methodVisitor.visitVarInsn(Opcodes.ILOAD, entry.slot);
+        }
     }
 
     public void push(int slot) {
@@ -70,16 +80,8 @@ public class LocalVarManager {
         push(entry);
     }
 
-    public void push(PropertyNode node) {
-        push(node.getIdentifier());
-    }
-
     public int getSlot(String name) {
         return findByName(name).slot;
-    }
-
-    public int getSlot(PropertyNode node) {
-        return getSlot(node.getIdentifier());
     }
 
     public final LocalVarEntry findBySlot(int slot) {

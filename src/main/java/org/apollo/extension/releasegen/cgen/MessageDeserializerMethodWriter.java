@@ -1,6 +1,7 @@
 package org.apollo.extension.releasegen.cgen;
 
 import org.apollo.extension.releasegen.cgen.utils.LocalVarManager;
+import org.apollo.extension.releasegen.cgen.utils.MessageUtils;
 import org.apollo.extension.releasegen.message.node.*;
 import org.apollo.extension.releasegen.message.property.ArrayPropertyType;
 import org.apollo.extension.releasegen.message.property.IntegerPropertyType;
@@ -84,14 +85,24 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
         try {
             messageClass = Class.forName(node.getIdentifier());
             messageInfo = Introspector.getBeanInfo(messageClass);
+
+            methodWriter.visitTypeInsn(NEW, Type.getInternalName(messageClass));
+            methodWriter.visitInsn(DUP);
+            methodWriter.visitMethodInsn(
+                INVOKESPECIAL,
+                Type.getInternalName(messageClass),
+                "<init>",
+                Type.getConstructorDescriptor(messageClass.getConstructor()),
+                false
+            );
+            methodWriter.visitVarInsn(ASTORE, MESSAGE_SLOT);
         } catch (IntrospectionException | ClassNotFoundException e) {
-            throw new MessageNodeVisitorException("Failed to get java bean info for message class \"" + node.getIdentifier() + "\"");
+            throw new MessageNodeVisitorException("Failed to get java bean info for message class \"" + node.getIdentifier() + "\"", e);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
         }
     }
 
-    @Override
-    public void visitCompoundProperty(CompoundPropertyNode node) {
-    }
 
     @Override
     public void visitPropertyNode(PropertyNode node) throws MessageNodeVisitorException {
@@ -101,11 +112,14 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
             if (propertyType instanceof ArrayPropertyType) {
                 visitArrayPropertyNode(node, (ArrayPropertyType) propertyType);
             } else {
-                int slot = readAndStoreVar(node);
+                int slot = node instanceof CompoundPropertyNode ?
+                        readAndStoreCompoundVar((CompoundPropertyNode) node) :
+                        readAndStoreVar(node);
 
+                methodWriter.visitVarInsn(ALOAD, MESSAGE_SLOT);
                 localVarManager.push(slot); // push back to stack
 
-                PropertyDescriptor descriptor = getPropertyDescriptor(node.getIdentifier());
+                PropertyDescriptor descriptor = MessageUtils.getPropertyDescriptor(messageInfo, node.getIdentifier());
                 Method writeMethod = descriptor.getWriteMethod();
 
                 // call setter with local var
@@ -116,34 +130,31 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
         }
     }
 
-    public int readAndStoreVar(PropertyNode node) throws ClassNotFoundException {
+    public int readAndStoreVar(PropertyNode node) throws ClassNotFoundException, NoSuchMethodException {
         int slot = localVarManager.allocate(node.getIdentifier(), node.getType().getType());
 
         readAndStoreVar(slot, node.getType());
         return slot;
     }
 
-    public void readAndStoreVar(int slot, PropertyType type) {
+    public void readAndStoreVar(int slot, PropertyType type) throws NoSuchMethodException, ClassNotFoundException {
         MethodReference ref = methodResolver.getReadMethod(type);
         Method method = ref.getMethod();
 
+        methodWriter.visitVarInsn(ALOAD, BUFFER_SLOT);
         methodWriter.visitMethodInsn(
-            INVOKESPECIAL,
-            Type.getInternalName(ref.getOwner()),
-            method.getName(),
-            Type.getMethodDescriptor(method),
-            false
+                INVOKEVIRTUAL,
+                Type.getInternalName(ref.getOwner()),
+                method.getName(),
+                Type.getMethodDescriptor(method),
+                false
         );
 
         localVarManager.store(slot);
 
     }
 
-    public void visitCompoundArrayPropertyNode(CompoundPropertyNode node, ArrayPropertyType type) {
-
-    }
-
-    public void visitArrayPropertyNode(PropertyNode node, ArrayPropertyType type) throws ClassNotFoundException {
+    public void visitArrayPropertyNode(PropertyNode node, ArrayPropertyType type) throws ClassNotFoundException, IntrospectionException, NoSuchMethodException {
         Class<?> valueType = type.getType();
         PropertyType elementType = type.getElementType();
 
@@ -180,7 +191,11 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
             methodWriter.visitJumpInsn(IF_ICMPGE, loopEndLabel);
 
             int elementSlot = localVarManager.allocate(node.getIdentifier() + "_el", elementType.getType(), loopLabel, loopEndLabel);
-            readAndStoreVar(elementSlot, elementType);
+            if (node instanceof CompoundPropertyNode) {
+                readAndStoreCompoundVar(elementSlot, (CompoundPropertyNode) node);
+            } else {
+                readAndStoreVar(elementSlot, elementType);
+            }
 
             localVarManager.push(slot);
             localVarManager.push(counterSlot);
@@ -195,29 +210,46 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
 
     }
 
+    public int readAndStoreCompoundVar(CompoundPropertyNode node) throws ClassNotFoundException, IntrospectionException, NoSuchMethodException {
+        int slot = localVarManager.allocate(node.getIdentifier(), node.getType().getType());
+
+        readAndStoreCompoundVar(slot, node);
+        return slot;
+    }
+
+    public void readAndStoreCompoundVar(int slot, CompoundPropertyNode node) throws ClassNotFoundException, IntrospectionException, NoSuchMethodException {
+        Class<?> compoundObjectClass = node.getType().getType();
+        BeanInfo compoundObjectInfo = Introspector.getBeanInfo(compoundObjectClass);
+
+        for (PropertyNode child : node.getChildren()) {
+            String[] parts = child.getIdentifier().split("\\$"); // 2nd part is actual property name
+            PropertyDescriptor propertyDescriptor = MessageUtils.getPropertyDescriptor(compoundObjectInfo, parts[1]);
+            Method writeMethod = propertyDescriptor.getWriteMethod();
+
+            int childSlot = localVarManager.getOrAllocate(child.getIdentifier(), child.getType().getType());
+            readAndStoreVar(childSlot, child.getType());
+
+            localVarManager.push(slot);
+            localVarManager.push(childSlot);
+            methodWriter.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(compoundObjectClass), writeMethod.getName(), Type.getMethodDescriptor(writeMethod), false);
+        }
+    }
+
     @Override
     public void visitEnd(MessageNode node) throws MessageNodeVisitorException {
         methodWriter.visitVarInsn(ALOAD, MESSAGE_SLOT);
         methodWriter.visitInsn(ARETURN);
         methodWriter.visitLabel(endLabel);
 
-        localVarManager.visitLocalVariables();
-
+        methodWriter.visitLocalVariable("this", Type.getDescriptor(messageClass), null, startLabel, endLabel, 0);
         methodWriter.visitLocalVariable(BUFFER_NAME, Type.getDescriptor(ByteBuffer.class), null, startLabel, endLabel, BUFFER_SLOT);
         methodWriter.visitLocalVariable(MESSAGE_NAME, Type.getDescriptor(Object.class), null, startLabel, endLabel, MESSAGE_SLOT);
+
+        localVarManager.visitLocalVariables();
+
         methodWriter.visitMaxs(1, 1); //@automatically resolved by options set in class writer
         methodWriter.visitEnd();
 
-    }
-
-    public PropertyDescriptor getPropertyDescriptor(String propertyName) {
-        for (PropertyDescriptor descriptor : messageInfo.getPropertyDescriptors()) {
-            if (descriptor.getName().equals(propertyName)) {
-                return descriptor;
-            }
-        }
-
-        return null;
     }
 
     public void pushArrayLength(String lengthSpecifier) {
