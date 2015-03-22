@@ -14,7 +14,7 @@ public class CompoundPropertyNode extends PropertyNode {
      */
     public boolean addChild(PropertyNode node) {
         children.put(node.getIdentifier(), node);
-        return node.setParent(this);
+        return true;
     }
 
     public boolean hasChild(String identifier) {

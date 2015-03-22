@@ -99,7 +99,7 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
         } catch (IntrospectionException | ClassNotFoundException e) {
             throw new MessageNodeVisitorException("Failed to get java bean info for message class \"" + node.getIdentifier() + "\"", e);
         } catch (NoSuchMethodException e) {
-            e.printStackTrace();
+            throw new MessageNodeVisitorException("Couldn't find no-args constructor for message class \"" + messageClass.getCanonicalName() + "\"", e);
         }
     }
 
@@ -222,11 +222,10 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
         BeanInfo compoundObjectInfo = Introspector.getBeanInfo(compoundObjectClass);
 
         for (PropertyNode child : node.getChildren()) {
-            String[] parts = child.getIdentifier().split("\\$"); // 2nd part is actual property name
-            PropertyDescriptor propertyDescriptor = MessageUtils.getPropertyDescriptor(compoundObjectInfo, parts[1]);
+            PropertyDescriptor propertyDescriptor = MessageUtils.getPropertyDescriptor(compoundObjectInfo, child.getIdentifier());
             Method writeMethod = propertyDescriptor.getWriteMethod();
 
-            int childSlot = localVarManager.getOrAllocate(child.getIdentifier(), child.getType().getType());
+            int childSlot = localVarManager.getOrAllocate(getChildPropertyName(node, child), child.getType().getType());
             readAndStoreVar(childSlot, child.getType());
 
             localVarManager.push(slot);
@@ -261,5 +260,9 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
         } else { // array size is identifier
             localVarManager.push(lengthSpecifier);
         }
+    }
+
+    public static String getChildPropertyName(PropertyNode parent, PropertyNode child) {
+        return parent.getIdentifier() + "$" + child.getIdentifier();
     }
 }

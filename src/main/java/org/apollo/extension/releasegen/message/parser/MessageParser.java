@@ -201,7 +201,7 @@ public class MessageParser extends BaseParser<Object> {
         return sequence(
                 ch(':').suppressNode(), identifier(), attributeNode.setIdentifier(match()),
                 spacing(), string("=>"), spacing(),
-                attributeValue(), attributeNode.setValue(match()), attributeNode.setType((AttributeType) pop()),
+                attributeValue(), spacing(), attributeNode.setValue(match()), attributeNode.setType((AttributeType) pop()),
                 push(attributeNode)
         );
     }
@@ -211,7 +211,7 @@ public class MessageParser extends BaseParser<Object> {
      * Possible values are:
      * <pre>
      *     "string_literal"
-     *     0xcafebabe
+     *     0xcafebabe - no longer supported, for now
      *     12345
      *     previouslyDeclaredVariable
      * </pre>
@@ -305,14 +305,15 @@ public class MessageParser extends BaseParser<Object> {
      * Matches a string literal, excluding new lines.
      *
      * @return A rule which matches a string literal.
+     * @todo - fix this so it discards quotes
      */
     public Rule stringLiteral() {
         return sequence(
-                '"',
+                ch('"').skipNode(),
                 zeroOrMore(
                         sequence(testNot(anyOf("\r\n\"\\")), ANY)
                 ).suppressSubnodes(),
-                '"'
+                ch('"').skipNode()
         );
     }
 

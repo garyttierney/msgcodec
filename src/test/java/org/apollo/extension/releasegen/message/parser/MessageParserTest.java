@@ -16,16 +16,16 @@ public class MessageParserTest {
     @Test
     public void testMessageNode() throws Exception {
         String input =
-                "org.apollo.message.TestMessage :opcode => 50 {" +
-                "    uint32 testPropertyA;" +
-                "    org.apollo.message.TestEmbeddedMessage testPropertyB {" +
-                "        uint16 testPropertyC;" +
-                "    }" +
+                "org.apollo.message.TestMessage :opcode => 50 { \n" +
+                "    uint32 testPropertyA; \n" +
+                "    org.apollo.message.TestEmbeddedMessage testPropertyB { \n" +
+                "        uint16 testPropertyC; \n" +
+                "    }\n" +
                 "}";
 
         ParsingResult<MessageNode> result = new RecoveringParseRunner<MessageNode>(parser.messageNode()).run(input);
         MessageNode message = result.resultValue;
-
+        System.err.println(ParseTreeUtils.printNodeTree(result));
         Assert.assertEquals("org.apollo.message.TestMessage", message.getIdentifier());
         Assert.assertEquals(2, message.getPropertyList().size());
 
