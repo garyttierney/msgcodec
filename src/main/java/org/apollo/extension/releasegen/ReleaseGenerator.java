@@ -9,18 +9,12 @@ import org.apollo.extension.releasegen.message.node.MessageNode;
 import org.apollo.extension.releasegen.message.node.MessageNodeVisitorException;
 import org.apollo.extension.releasegen.message.parser.MessageParser;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.util.Printer;
-import org.objectweb.asm.util.Textifier;
-import org.objectweb.asm.util.TraceMethodVisitor;
 import org.parboiled.Parboiled;
 import org.parboiled.parserunners.ParseRunner;
 import org.parboiled.parserunners.RecoveringParseRunner;
 import org.parboiled.support.ParsingResult;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
