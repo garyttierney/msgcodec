@@ -9,8 +9,6 @@ public class CompoundPropertyNode extends PropertyNode {
 
     /**
      * Parser action which adds a child to this property and
-     * @param node
-     * @return
      */
     public boolean addChild(PropertyNode node) {
         children.put(node.getIdentifier(), node);

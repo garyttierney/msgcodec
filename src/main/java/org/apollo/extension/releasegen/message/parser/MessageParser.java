@@ -44,15 +44,15 @@ public class MessageParser extends BaseParser<Object> {
         MessageNode node = new MessageNode();
 
         return sequence(
-                qualifiedIdentifier(),
-                node.setIdentifier((String) pop()),
-                zeroOrMore(
-                        sequence(attribute(), node.addAttribute((AttributeNode) pop()))
-                ),
-                oneOrMore(
-                        sequence(firstOf(compoundPropertyDefinition(), propertyDefinition()), node.addProperty((PropertyNode) pop()))
-                ),
-                push(node)
+            qualifiedIdentifier(),
+            node.setIdentifier((String) pop()),
+            zeroOrMore(
+                sequence(attribute(), node.addAttribute((AttributeNode) pop()))
+            ),
+            oneOrMore(
+                sequence(firstOf(compoundPropertyDefinition(), propertyDefinition()), node.addProperty((PropertyNode) pop()))
+            ),
+            push(node)
         );
     }
 
@@ -96,36 +96,36 @@ public class MessageParser extends BaseParser<Object> {
         CompoundPropertyNode node = new CompoundPropertyNode();
 
         return firstOf(
-                // match array
-                sequence(
-                        qualifiedIdentifier(), spacing(), identifier(), node.setIdentifier(match()),
-                        propertyArrayInitializer(),
-                        node.setType(
-                                new ArrayPropertyType(new SimplePropertyType((String) pop(1)), (String) pop())
-                        ),
-                        spacing(),
-                        LBRACE, spacing(),
-                        oneOrMore(
-                                sequence(spacing(), propertyDefinition(), spacing(), node.addChild((PropertyNode) pop())).label("property_decl")
-                        ).label("child_properties"),
-                        RBRACE, spacing(),
-                        push(node)
-                ).label("array_definition"),
+            // match array
+            sequence(
+                qualifiedIdentifier(), spacing(), identifier(), node.setIdentifier(match()),
+                propertyArrayInitializer(),
+                node.setType(
+                    new ArrayPropertyType(new SimplePropertyType((String) pop(1)), (String) pop())
+                ),
+                spacing(),
+                LBRACE, spacing(),
+                    oneOrMore(
+                        sequence(spacing(), propertyDefinition(), spacing(), node.addChild((PropertyNode) pop())).label("property_decl")
+                    ).label("child_properties"),
+                RBRACE, spacing(),
+                push(node)
+            ).label("array_definition"),
 
-                // match simple object
-                sequence(
-                        qualifiedIdentifier().label("type"), spacing(), identifier(), node.setIdentifier(match()),
-                        node.setType(
-                                new SimplePropertyType((String) pop())
-                        ),
-                        spacing(),
-                        LBRACE, spacing(),
-                        oneOrMore(
-                                sequence(spacing(), propertyDefinition(), spacing(), node.addChild((PropertyNode) pop())).label("property_decl")
-                        ).label("child_properties"),
-                        RBRACE, spacing(),
-                        push(node)
-                ).label("definition")
+            // match simple object
+            sequence(
+                qualifiedIdentifier().label("type"), spacing(), identifier(), node.setIdentifier(match()),
+                node.setType(
+                    new SimplePropertyType((String) pop())
+                ),
+                spacing(),
+                LBRACE, spacing(),
+                    oneOrMore(
+                        sequence(spacing(), propertyDefinition(), spacing(), node.addChild((PropertyNode) pop())).label("property_decl")
+                    ).label("child_properties"),
+                RBRACE, spacing(),
+                push(node)
+            ).label("definition")
         );
     }
 
@@ -145,20 +145,20 @@ public class MessageParser extends BaseParser<Object> {
         PropertyNode messagePropertyNode = new PropertyNode();
 
         return sequence(
-                propertyType(), spacing(), messagePropertyNode.setType((PropertyType) pop()),
+            propertyType(), spacing(), messagePropertyNode.setType((PropertyType) pop()),
 
-                firstOf(
-                        sequence(
-                                identifier(),
-                                messagePropertyNode.setIdentifier(match()),
-                                propertyArrayInitializer(),
-                                messagePropertyNode.setType(new ArrayPropertyType(messagePropertyNode.getType(), (String) pop()))
-                        ),
-                        sequence(identifier(), messagePropertyNode.setIdentifier(match()))
+            firstOf(
+                sequence(
+                    identifier(),
+                    messagePropertyNode.setIdentifier(match()),
+                    propertyArrayInitializer(),
+                    messagePropertyNode.setType(new ArrayPropertyType(messagePropertyNode.getType(), (String) pop()))
                 ),
+                sequence(identifier(), messagePropertyNode.setIdentifier(match()))
+            ),
 
-                push(messagePropertyNode),
-                SEMICOLON
+            push(messagePropertyNode),
+            SEMICOLON
         );
     }
 
@@ -174,14 +174,14 @@ public class MessageParser extends BaseParser<Object> {
     @Label("property_array_initializer")
     public Rule propertyArrayInitializer() {
         return sequence(
-                LBRACKET,
-                sequence(
-                        firstOf(
-                                identifier(), number()
-                        ),
-                        push(match())
+            LBRACKET,
+            sequence(
+                firstOf(
+                    identifier(), number()
                 ),
-                RBRACKET
+                push(match())
+            ),
+            RBRACKET
         );
     }
 
@@ -199,10 +199,10 @@ public class MessageParser extends BaseParser<Object> {
         AttributeNode attributeNode = new AttributeNode();
 
         return sequence(
-                ch(':').suppressNode(), identifier(), attributeNode.setIdentifier(match()),
-                spacing(), string("=>"), spacing(),
-                attributeValue(), spacing(), attributeNode.setValue(match()), attributeNode.setType((AttributeType) pop()),
-                push(attributeNode)
+            ch(':').suppressNode(), identifier(), attributeNode.setIdentifier(match()),
+            spacing(), string("=>"), spacing(),
+            attributeValue(), spacing(), attributeNode.setValue(match()), attributeNode.setType((AttributeType) pop()),
+            push(attributeNode)
         );
     }
 
@@ -221,9 +221,9 @@ public class MessageParser extends BaseParser<Object> {
     @Label("attribute_value")
     public Rule attributeValue() {
         return firstOf(
-                sequence(number(), push(AttributeType.NUMBER_LITERAL)),
-                sequence(stringLiteral(), push(AttributeType.STRING_LITERAL)),
-                sequence(identifier(), push(AttributeType.REFERENCE))
+            sequence(number(), push(AttributeType.NUMBER_LITERAL)),
+            sequence(stringLiteral(), push(AttributeType.STRING_LITERAL)),
+            sequence(identifier(), push(AttributeType.REFERENCE))
         );
     }
 
@@ -267,10 +267,10 @@ public class MessageParser extends BaseParser<Object> {
         IntegerPropertyType intType = new IntegerPropertyType();
 
         return sequence(
-                optional(sequence(ch('u'), intType.setSigned(false))).suppressSubnodes(),
-                string("int").suppressNode(),
-                sequence(oneOrMore(digit()), intType.setBits(Integer.valueOf(match()))),
-                push(intType)
+            optional(sequence(ch('u'), intType.setSigned(false))).suppressSubnodes(),
+            string("int").suppressNode(),
+            sequence(oneOrMore(digit()), intType.setBits(Integer.valueOf(match()))),
+            push(intType)
         );
     }
 
@@ -309,11 +309,11 @@ public class MessageParser extends BaseParser<Object> {
      */
     public Rule stringLiteral() {
         return sequence(
-                ch('"').skipNode(),
-                zeroOrMore(
-                        sequence(testNot(anyOf("\r\n\"\\")), ANY)
-                ).suppressSubnodes(),
-                ch('"').skipNode()
+            ch('"').skipNode(),
+            zeroOrMore(
+                sequence(testNot(anyOf("\r\n\"\\")), ANY)
+            ).suppressSubnodes(),
+            ch('"').skipNode()
         );
     }
 
@@ -321,18 +321,18 @@ public class MessageParser extends BaseParser<Object> {
     public Rule spacing() { //from the parboiled java parser, supports whitespace, docblocks and end of line comments
         return zeroOrMore(firstOf(
 
-                // whitespace
-                oneOrMore(anyOf(" \t\r\n\f").label("Whitespace")),
+            // whitespace
+            oneOrMore(anyOf(" \t\r\n\f").label("Whitespace")),
 
-                // traditional comment
-                sequence("/*", zeroOrMore(testNot("*/"), ANY), "*/"),
+            // traditional comment
+            sequence("/*", zeroOrMore(testNot("*/"), ANY), "*/"),
 
-                // end of line comment
-                sequence(
-                        "//",
-                        zeroOrMore(testNot(anyOf("\r\n")), ANY),
-                        firstOf("\r\n", '\r', '\n', EOI)
-                )
+            // end of line comment
+            sequence(
+                "//",
+                zeroOrMore(testNot(anyOf("\r\n")), ANY),
+                firstOf("\r\n", '\r', '\n', EOI)
+            )
         ));
     }
 
