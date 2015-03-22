@@ -119,7 +119,7 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
                 methodWriter.visitVarInsn(ALOAD, MESSAGE_SLOT);
                 localVarManager.push(slot); // push back to stack
 
-                PropertyDescriptor descriptor = ASMUtils.getPropertyDescriptor(messageClass, node.getIdentifier());
+                PropertyDescriptor descriptor = ASMUtils.getPropertyDescriptor(messageInfo, node.getIdentifier());
                 Method writeMethod = descriptor.getWriteMethod();
 
                 // call setter with local var
@@ -223,7 +223,7 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
         methodWriter.visitVarInsn(ALOAD, MESSAGE_SLOT);
         localVarManager.push(slot); // push back to stack
 
-        PropertyDescriptor descriptor = ASMUtils.getPropertyDescriptor(messageClass, node.getIdentifier());
+        PropertyDescriptor descriptor = ASMUtils.getPropertyDescriptor(messageInfo, node.getIdentifier());
         Method writeMethod = descriptor.getWriteMethod();
 
         // call setter with local var
@@ -239,7 +239,9 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
         return slot;
     }
 
-    public void readAndStoreCompoundVar(int slot, CompoundPropertyNode node, PropertyType compoundPropertyType) throws ClassNotFoundException, IntrospectionException, NoSuchMethodException {
+    public void readAndStoreCompoundVar(int slot, CompoundPropertyNode node, PropertyType compoundPropertyType) throws ClassNotFoundException,
+            IntrospectionException, NoSuchMethodException {
+
         Class<?> compoundObjectClass = compoundPropertyType.getType();
 
         methodWriter.visitTypeInsn(NEW, Type.getInternalName(compoundObjectClass));
@@ -255,7 +257,7 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
         localVarManager.store(slot);
 
         for (PropertyNode child : node.getChildren()) {
-            PropertyDescriptor propertyDescriptor = ASMUtils.getPropertyDescriptor(compoundObjectClass, child.getIdentifier());
+            PropertyDescriptor propertyDescriptor = ASMUtils.getPropertyDescriptor(Introspector.getBeanInfo(compoundObjectClass), child.getIdentifier());
             Method writeMethod = propertyDescriptor.getWriteMethod();
 
             int childSlot = localVarManager.getOrAllocate(getChildPropertyName(node, child), child.getType().getType());
