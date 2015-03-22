@@ -1,25 +1,29 @@
 package org.apollo.extension.releasegen.message.node;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.LinkedList;
 
 public class CompoundPropertyNode extends PropertyNode {
-    private final Map<String, PropertyNode> children = new HashMap<>();
+    private final LinkedList<PropertyNode> children = new LinkedList<>();
 
     /**
      * Parser action which adds a child to this property and
      */
     public boolean addChild(PropertyNode node) {
-        children.put(node.getIdentifier(), node);
+        children.addLast(node);
         return true;
     }
 
     public boolean hasChild(String identifier) {
-        return children.containsKey(identifier);
+        for (PropertyNode node : children) {
+            if (identifier.equals(node.getIdentifier())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public Collection<PropertyNode> getChildren() {
-        return children.values();
+        return children;
     }
 }
