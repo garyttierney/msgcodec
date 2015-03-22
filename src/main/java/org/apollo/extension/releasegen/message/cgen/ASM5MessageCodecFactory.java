@@ -1,6 +1,5 @@
 package org.apollo.extension.releasegen.message.cgen;
 
-import org.apollo.extension.releasegen.CGenClassLoader;
 import org.apollo.extension.releasegen.message.MessageCodecFactory;
 import org.apollo.extension.releasegen.message.MessageCodecFactoryException;
 import org.apollo.extension.releasegen.message.MessageDeserializer;

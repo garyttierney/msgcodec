@@ -3,7 +3,7 @@ package org.apollo.extension.releasegen.io;
 /**
  * Represents the different simple data types.
  * 
- * @author Graham
+ * @author Graham <grahamedgecombe.com>
  */
 public enum DataType {
 
@@ -53,6 +53,24 @@ public enum DataType {
 	 */
 	public int getBytes() {
 		return bytes;
+	}
+
+	/**
+	 * Lookup a DataType by the bit width of the integer it represents.
+	 *
+	 * @param bits The number of bits to lookup
+	 * @return A DataType with a width of <code>bits</code> or null
+	 */
+	public static DataType fromBits(int bits) {
+		int bytes = bits / 8;
+
+		for(DataType type : values()) {
+			if (type.bytes == bytes) {
+				return type;
+			}
+		}
+
+		return null;
 	}
 
 }

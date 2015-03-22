@@ -1,11 +1,13 @@
 package org.apollo.extension.releasegen.message.parser;
 
+import org.apollo.extension.releasegen.io.DataType;
 import org.apollo.extension.releasegen.message.node.*;
 import org.apollo.extension.releasegen.message.property.ArrayPropertyType;
 import org.apollo.extension.releasegen.message.property.IntegerPropertyType;
 import org.junit.Assert;
 import org.junit.Test;
 import org.parboiled.Parboiled;
+import org.parboiled.parserunners.ErrorLocatingParseRunner;
 import org.parboiled.parserunners.RecoveringParseRunner;
 import org.parboiled.support.ParseTreeUtils;
 import org.parboiled.support.ParsingResult;
@@ -47,7 +49,7 @@ public class MessageParserTest {
                 "   uint16 testPropertyB; \n" +
                 "}";
 
-        ParsingResult<CompoundPropertyNode> result = new RecoveringParseRunner<CompoundPropertyNode>(parser.compoundPropertyDefinition()).run(input);
+        ParsingResult<CompoundPropertyNode> result = new ErrorLocatingParseRunner<CompoundPropertyNode>(parser.compoundPropertyDefinition()).run(input);
         CompoundPropertyNode attribute = result.resultValue;
 
         Assert.assertEquals(String.class, attribute.getType().getType());
@@ -67,7 +69,7 @@ public class MessageParserTest {
         ParsingResult<CompoundPropertyNode> result = new RecoveringParseRunner<CompoundPropertyNode>(parser.compoundPropertyDefinition()).run(input);
         CompoundPropertyNode attribute = result.resultValue;
 
-        System.err.println(ParseTreeUtils.printNodeTree(result));
+        System.out.println(ParseTreeUtils.printNodeTree(result));
         Assert.assertEquals(String[].class, attribute.getType().getType());
 
         Assert.assertTrue(attribute.hasChild("testPropertyA"));
@@ -137,7 +139,7 @@ public class MessageParserTest {
         ParsingResult<?> result = new RecoveringParseRunner<MessageNode>(parser.propertyType()).run(input);
         IntegerPropertyType type = (IntegerPropertyType) result.resultValue;
 
-        Assert.assertEquals(32, type.getBits());
+        Assert.assertEquals(DataType.INT, type.getDataType());
         Assert.assertFalse(type.isSigned());
     }
 }

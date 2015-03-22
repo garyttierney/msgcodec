@@ -3,7 +3,7 @@ package org.apollo.extension.releasegen.io;
 /**
  * Represents the different ways data values can be transformed.
  * 
- * @author Graham
+ * @author Graham <grahamedgecombe.com>
  */
 public enum DataTransformation {
 

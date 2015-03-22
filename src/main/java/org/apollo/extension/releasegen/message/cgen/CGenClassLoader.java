@@ -1,4 +1,4 @@
-package org.apollo.extension.releasegen;
+package org.apollo.extension.releasegen.message.cgen;
 
 /**
  * Class loader proxy for exposing the {@link ClassLoader#defineClass} method to define classes on the fly.

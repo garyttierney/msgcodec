@@ -34,7 +34,7 @@ public class MessageCodecGenerator {
         this.messageCodecFactory = messageCodecFactory;
     }
 
-    public MessageCodec generate(int version) throws MessageCodecGeneratorException {
+    public MessageCodec generate() throws MessageCodecGeneratorException {
         ParseRunner<MessageNode> parseRunner = new RecoveringParseRunner<>(messageParser.messageNode());
 
         final Map<Integer, MessageDeserializer> deserializerMap = new HashMap<>();
@@ -72,6 +72,6 @@ public class MessageCodecGenerator {
             }
         }
 
-        return new MessageCodec(version, deserializerMap, serializerMap);
+        return new MessageCodec(deserializerMap, serializerMap);
     }
 }

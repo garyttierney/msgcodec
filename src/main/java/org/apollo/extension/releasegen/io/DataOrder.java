@@ -3,7 +3,7 @@ package org.apollo.extension.releasegen.io;
 /**
  * Represents the order of bytes in a {@link DataType} when {@link DataType#getBytes()} {@code  > 1}.
  *
- * @author Graham
+ * @author Graham <grahamedgecombe.com>
  */
 public enum DataOrder {
 

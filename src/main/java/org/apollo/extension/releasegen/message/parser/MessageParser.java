@@ -1,6 +1,7 @@
 package org.apollo.extension.releasegen.message.parser;
 
 import org.apollo.extension.releasegen.io.DataOrder;
+import org.apollo.extension.releasegen.io.DataType;
 import org.apollo.extension.releasegen.message.node.*;
 import org.apollo.extension.releasegen.message.property.ArrayPropertyType;
 import org.apollo.extension.releasegen.message.property.IntegerPropertyType;
@@ -11,6 +12,7 @@ import org.parboiled.Rule;
 import org.parboiled.annotations.BuildParseTree;
 import org.parboiled.annotations.Label;
 import org.parboiled.annotations.SuppressNode;
+import org.parboiled.support.Var;
 
 @BuildParseTree
 public class MessageParser extends BaseParser<Object> {
@@ -47,11 +49,19 @@ public class MessageParser extends BaseParser<Object> {
         return sequence(
             qualifiedIdentifier(),
             node.setIdentifier((String) pop()),
+            optional(
+                sequence(
+                    attribute(), node.addAttribute((AttributeNode) pop()),
+                    zeroOrMore(
+                        sequence(ch(','), attribute(), node.addAttribute((AttributeNode) pop()))
+                    )
+                )
+            ),
             zeroOrMore(
                 sequence(attribute(), node.addAttribute((AttributeNode) pop()))
             ),
             oneOrMore(
-                sequence(firstOf(compoundPropertyDefinition(), propertyDefinition()), node.addProperty((PropertyNode) pop()))
+                sequence(spacing(), firstOf(compoundPropertyDefinition(), propertyDefinition()), node.addProperty((PropertyNode) pop()))
             ),
             push(node)
         );
@@ -94,38 +104,38 @@ public class MessageParser extends BaseParser<Object> {
      */
     @Label("compound_property")
     public Rule compoundPropertyDefinition() {
-        CompoundPropertyNode node = new CompoundPropertyNode();
+        final Var<CompoundPropertyNode> propertyVar = new Var<>(new CompoundPropertyNode());
 
         return firstOf(
             // match array
             sequence(
-                qualifiedIdentifier(), spacing(), identifier(), node.setIdentifier(match()),
+                qualifiedIdentifier(), spacing(), identifier(), propertyVar.getNonnull().setIdentifier(match()),
                 propertyArrayInitializer(),
-                node.setType(
+                propertyVar.getNonnull().setType(
                     new ArrayPropertyType(new SimplePropertyType((String) pop(1)), (String) pop())
                 ),
                 spacing(),
-                LBRACE, spacing(),
+                LBRACE,
                 oneOrMore(
-                    sequence(spacing(), propertyDefinition(), spacing(), node.addChild((PropertyNode) pop())).label("property_decl")
+                    sequence(spacing(), propertyDefinition(), propertyVar.getNonnull().addChild((PropertyNode) pop()), spacing()).label("property_decl")
                 ).label("child_properties"),
                 RBRACE, spacing(),
-                push(node)
+                push(propertyVar.getNonnull())
             ).label("array_definition"),
 
             // match simple object
             sequence(
-                qualifiedIdentifier().label("type"), spacing(), identifier(), node.setIdentifier(match()),
-                node.setType(
+                qualifiedIdentifier().label("type"), spacing(), identifier(), propertyVar.getNonnull().setIdentifier(match()),
+                propertyVar.getNonnull().setType(
                     new SimplePropertyType((String) pop())
                 ),
                 spacing(),
                 LBRACE, spacing(),
                 oneOrMore(
-                    sequence(spacing(), propertyDefinition(), spacing(), node.addChild((PropertyNode) pop())).label("property_decl")
+                    sequence(spacing(), propertyDefinition(), propertyVar.getNonnull().addChild((PropertyNode) pop()), spacing()).label("property_decl")
                 ).label("child_properties"),
                 RBRACE, spacing(),
-                push(node)
+                push(propertyVar.getAndSet(new CompoundPropertyNode()))
             ).label("definition")
         );
     }
@@ -143,22 +153,23 @@ public class MessageParser extends BaseParser<Object> {
      */
     @Label("property_definition")
     public Rule propertyDefinition() {
-        PropertyNode messagePropertyNode = new PropertyNode();
+        Var<PropertyNode> propertyNodeVar = new Var<>(new PropertyNode());
+
 
         return sequence(
-            propertyType(), spacing(), messagePropertyNode.setType((PropertyType) pop()),
+            spacing(), propertyType(), spacing(), propertyNodeVar.set(new PropertyNode()), propertyNodeVar.getNonnull().setType((PropertyType) pop()),
 
             firstOf(
                 sequence(
                     identifier(),
-                    messagePropertyNode.setIdentifier(match()),
+                    propertyNodeVar.getNonnull().setIdentifier(match()),
                     propertyArrayInitializer(),
-                    messagePropertyNode.setType(new ArrayPropertyType(messagePropertyNode.getType(), (String) pop()))
+                    propertyNodeVar.getNonnull().setType(new ArrayPropertyType(propertyNodeVar.getNonnull().getType(), (String) pop()))
                 ),
-                sequence(identifier(), messagePropertyNode.setIdentifier(match()))
+                sequence(identifier(), propertyNodeVar.getNonnull().setIdentifier(match()))
             ),
 
-            push(messagePropertyNode),
+            push(propertyNodeVar.getAndSet(new PropertyNode())),
             SEMICOLON
         );
     }
@@ -183,7 +194,7 @@ public class MessageParser extends BaseParser<Object> {
                 push(match())
             ),
             RBRACKET
-        );
+        ).suppressNode();
     }
 
     /**
@@ -271,8 +282,13 @@ public class MessageParser extends BaseParser<Object> {
         return sequence(
             optional(sequence(ch('u'), intType.setSigned(false))).suppressSubnodes(),
             string("int").suppressNode(),
-            sequence(oneOrMore(digit()), intType.setBits(Integer.valueOf(match()))),
-            optional(sequence(intTypeDataOrder(), intType.setDataOrder((DataOrder) pop()))),
+            sequence(
+                oneOrMore(digit()),
+                intType.setDataType(
+                    DataType.fromBits(Integer.valueOf(match()))
+                ),
+                optional(sequence(intTypeDataOrder(), intType.setDataOrder((DataOrder) pop())))
+            ),
             push(intType)
         );
     }

@@ -4,7 +4,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 /**
- * @author Graham <grahamedgecombe.com
+ * @author Graham <grahamedgecombe.com>
  */
 public class PacketBuilder {
 

@@ -1,5 +1,6 @@
 package org.apollo.extension.releasegen.message.node;
 
+import com.google.common.base.Objects;
 import org.apollo.extension.releasegen.message.property.PropertyType;
 
 public class PropertyNode {
@@ -25,4 +26,16 @@ public class PropertyNode {
         return true;
     }
 
+    public boolean equals(Object other) {
+        if (!(other instanceof PropertyNode)) {
+            return false;
+        }
+
+        PropertyNode otherProperty = (PropertyNode) other;
+        return otherProperty.identifier.equals(this.identifier) && otherProperty.type.equals(this.type);
+    }
+
+    public int hashCode() {
+        return Objects.hashCode(identifier, type);
+    }
 }
