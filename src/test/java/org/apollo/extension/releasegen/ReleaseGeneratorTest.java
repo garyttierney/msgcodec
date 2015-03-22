@@ -124,9 +124,6 @@ public class ReleaseGeneratorTest {
         short[] testC = testMessage.getTestC();
 
         Assert.assertEquals(5, testC.length);
-
-        System.err.println(Arrays.toString(testC));
-
         Assert.assertEquals(2, testMessage.getTestD().length);
     }
 

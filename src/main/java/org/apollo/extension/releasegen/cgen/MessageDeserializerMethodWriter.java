@@ -228,8 +228,6 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
 
         // call setter with local var
         methodWriter.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(messageClass), writeMethod.getName(), Type.getMethodDescriptor(writeMethod), false);
-
-
     }
 
     public int readAndStoreCompoundVar(CompoundPropertyNode node, PropertyType compoundPropertyType) throws ClassNotFoundException, IntrospectionException, NoSuchMethodException {
