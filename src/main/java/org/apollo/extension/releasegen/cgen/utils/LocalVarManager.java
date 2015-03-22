@@ -59,13 +59,13 @@ public class LocalVarManager {
     }
 
     public void store(LocalVarEntry entry) {
-        if (int.class.isAssignableFrom(entry.type)) {
+        if (MessageUtils.isIntegerType(entry.type)) {
             methodVisitor.visitVarInsn(Opcodes.ISTORE, entry.slot);
         }
      }
 
     public void push(LocalVarEntry entry) {
-        if (int.class.isAssignableFrom(entry.type)) {
+        if (MessageUtils.isIntegerType(entry.type)) {
             methodVisitor.visitVarInsn(Opcodes.ILOAD, entry.slot);
         }
     }

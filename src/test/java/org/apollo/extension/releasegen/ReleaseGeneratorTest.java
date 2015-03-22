@@ -20,24 +20,42 @@ public class ReleaseGeneratorTest {
         MessageNode node = new MessageNode();
         node.setIdentifier("org.apollo.extension.releasegen.message.TestMessage");
 
-        PropertyNode propertyNode = new PropertyNode();
-        propertyNode.setIdentifier("test");
+        {
+            PropertyNode propertyNode = new PropertyNode();
+            propertyNode.setIdentifier("test");
 
-        IntegerPropertyType propertyType = new IntegerPropertyType();
-        propertyType.setBits(32);
-        propertyType.setSigned(true);
+            IntegerPropertyType propertyType = new IntegerPropertyType();
+            propertyType.setBits(32);
+            propertyType.setSigned(true);
 
-        propertyNode.setType(propertyType);
+            propertyNode.setType(propertyType);
 
-        node.addProperty(propertyNode);
+            node.addProperty(propertyNode);
+        }
+
+        {
+            PropertyNode propertyNode = new PropertyNode();
+            propertyNode.setIdentifier("testB");
+
+            IntegerPropertyType propertyType = new IntegerPropertyType();
+            propertyType.setBits(16);
+            propertyType.setSigned(true);
+
+            propertyNode.setType(propertyType);
+
+            node.addProperty(propertyNode);
+        }
+
         MessageDeserializer deserializer = generator.createMessageDeserializer(node);
 
-        ByteBuffer buffer = ByteBuffer.allocate(4);
+        ByteBuffer buffer = ByteBuffer.allocate(6);
         buffer.putInt(1000);
+        buffer.putShort((short) 6);
         buffer.flip();
 
         TestMessage testMessage = (TestMessage) deserializer.deserialize(buffer);
         Assert.assertEquals(1000, testMessage.getTest());
+        Assert.assertEquals(6, testMessage.getTestB());
     }
 
     @Test
