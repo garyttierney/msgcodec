@@ -79,7 +79,7 @@ public class ReleaseGenerator {
     }
 
     public MessageSerializer createMessageSerializer(MessageNode node) {
-        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
+        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
 //        MessageNodeVisitor visitor = new MessageSerializerVisitor(cw);
 
 //        node.accept(visitor);
@@ -87,7 +87,7 @@ public class ReleaseGenerator {
     }
 
     public MessageDeserializer createMessageDeserializer(MessageNode node) throws IllegalAccessException, InstantiationException, MessageNodeVisitorException {
-        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
+        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         String deserializerClassName = node.getIdentifier() + "Deserializer";
         {
             node.accept(new MessageDeserializerClassWriter(deserializerClassName, cw, methodReferenceResolver));
@@ -97,7 +97,6 @@ public class ReleaseGenerator {
         byte[] classBytes = cw.toByteArray();
 
         Class<?> clazz = classLoader.defineClassProxy(deserializerClassName, classBytes, 0, classBytes.length);
-
         return (MessageDeserializer) clazz.newInstance();
     }
 

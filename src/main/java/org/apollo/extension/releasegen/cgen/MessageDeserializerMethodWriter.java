@@ -1,7 +1,7 @@
 package org.apollo.extension.releasegen.cgen;
 
 import org.apollo.extension.releasegen.cgen.utils.LocalVarManager;
-import org.apollo.extension.releasegen.cgen.utils.MessageUtils;
+import org.apollo.extension.releasegen.cgen.utils.ASMUtils;
 import org.apollo.extension.releasegen.message.node.*;
 import org.apollo.extension.releasegen.message.property.ArrayPropertyType;
 import org.apollo.extension.releasegen.message.property.IntegerPropertyType;
@@ -119,7 +119,7 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
                 methodWriter.visitVarInsn(ALOAD, MESSAGE_SLOT);
                 localVarManager.push(slot); // push back to stack
 
-                PropertyDescriptor descriptor = MessageUtils.getPropertyDescriptor(messageInfo, node.getIdentifier());
+                PropertyDescriptor descriptor = ASMUtils.getPropertyDescriptor(messageInfo, node.getIdentifier());
                 Method writeMethod = descriptor.getWriteMethod();
 
                 // call setter with local var
@@ -161,7 +161,7 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
         pushArrayLength(type.getLengthSpecifier());
 
         if (elementType instanceof IntegerPropertyType) {
-            methodWriter.visitIntInsn(NEWARRAY, T_INT);
+            methodWriter.visitIntInsn(NEWARRAY, ASMUtils.getIntegerArrayType(elementType.getType()));
         } else {
             methodWriter.visitTypeInsn(ANEWARRAY, Type.getInternalName(valueType));
         }
@@ -171,6 +171,8 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
 
         Label loopStartLabel = new Label();
         Label loopEndLabel = new Label();
+        Label loopConditionLabel = new Label();
+
         methodWriter.visitLabel(loopStartLabel);
 
         int counterSlot = localVarManager.allocate("counter_" + node.getIdentifier(), int.class);
@@ -178,17 +180,14 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
         { // counter = 0
             methodWriter.visitInsn(ICONST_0);
             localVarManager.store(counterSlot);
+
+            methodWriter.visitJumpInsn(GOTO, loopConditionLabel);
         }
 
         Label loopLabel = new Label();
 
-        { // counter < length
+        { // identifier[counter++] = buffer.getValue()
             methodWriter.visitLabel(loopLabel);
-
-            localVarManager.push(counterSlot);
-            pushArrayLength(type.getLengthSpecifier());
-
-            methodWriter.visitJumpInsn(IF_ICMPGE, loopEndLabel);
 
             int elementSlot = localVarManager.allocate(node.getIdentifier() + "_el", elementType.getType(), loopLabel, loopEndLabel);
             if (node instanceof CompoundPropertyNode) {
@@ -201,12 +200,35 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
             localVarManager.push(counterSlot);
             localVarManager.push(elementSlot);
 
-            methodWriter.visitInsn(AALOAD);
+            if (elementType instanceof IntegerPropertyType) {
+                methodWriter.visitInsn(ASMUtils.getIntegerArrayStoreInsn(elementType.getType()));
+            } else {
+                methodWriter.visitInsn(AASTORE);
+            }
+
+            methodWriter.visitIincInsn(counterSlot, 1);
+
         }
 
-        methodWriter.visitIincInsn(counterSlot, 1);
-        methodWriter.visitJumpInsn(GOTO, loopLabel);
+        { // counter < length
+            methodWriter.visitLabel(loopConditionLabel);
+
+            localVarManager.push(counterSlot);
+            pushArrayLength(type.getLengthSpecifier());
+
+            methodWriter.visitJumpInsn(IF_ICMPLT, loopLabel);
+        }
+
         methodWriter.visitLabel(loopEndLabel);
+        methodWriter.visitVarInsn(ALOAD, MESSAGE_SLOT);
+        localVarManager.push(slot); // push back to stack
+
+        PropertyDescriptor descriptor = ASMUtils.getPropertyDescriptor(messageInfo, node.getIdentifier());
+        Method writeMethod = descriptor.getWriteMethod();
+
+        // call setter with local var
+        methodWriter.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(messageClass), writeMethod.getName(), Type.getMethodDescriptor(writeMethod), false);
+
 
     }
 
@@ -222,7 +244,7 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
         BeanInfo compoundObjectInfo = Introspector.getBeanInfo(compoundObjectClass);
 
         for (PropertyNode child : node.getChildren()) {
-            PropertyDescriptor propertyDescriptor = MessageUtils.getPropertyDescriptor(compoundObjectInfo, child.getIdentifier());
+            PropertyDescriptor propertyDescriptor = ASMUtils.getPropertyDescriptor(compoundObjectInfo, child.getIdentifier());
             Method writeMethod = propertyDescriptor.getWriteMethod();
 
             int childSlot = localVarManager.getOrAllocate(getChildPropertyName(node, child), child.getType().getType());
@@ -246,9 +268,8 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
 
         localVarManager.visitLocalVariables();
 
-        methodWriter.visitMaxs(1, 1); //@automatically resolved by options set in class writer
+        methodWriter.visitMaxs(1, 1);
         methodWriter.visitEnd();
-
     }
 
     public void pushArrayLength(String lengthSpecifier) {
