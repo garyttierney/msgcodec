@@ -14,6 +14,24 @@ public class MessageParserTest {
     MessageParser parser = Parboiled.createParser(MessageParser.class);
 
     @Test
+    public void testMessageNode() throws Exception {
+        String input =
+                "org.apollo.message.TestMessage :opcode => 50 {" +
+                "    uint32 testPropertyA;" +
+                "    org.apollo.message.TestEmbeddedMessage testPropertyB {" +
+                "        uint16 testPropertyC;" +
+                "    }" +
+                "}";
+
+        ParsingResult<MessageNode> result = new RecoveringParseRunner<MessageNode>(parser.messageNode()).run(input);
+        MessageNode message = result.resultValue;
+
+        Assert.assertEquals("org.apollo.message.TestMessage", message.getIdentifier());
+        Assert.assertEquals(2, message.getPropertyList().size());
+
+    }
+
+    @Test
     public void testMessageIdentifier() throws Exception {
         String input = "org.apollo.message.Whatever";
         ParsingResult<?> result = new RecoveringParseRunner<>(parser.qualifiedIdentifier()).run(input);

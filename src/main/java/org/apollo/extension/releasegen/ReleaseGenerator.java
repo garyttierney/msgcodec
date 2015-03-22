@@ -8,12 +8,8 @@ import org.apollo.extension.releasegen.message.node.AttributeType;
 import org.apollo.extension.releasegen.message.node.MessageNode;
 import org.apollo.extension.releasegen.message.node.MessageNodeVisitorException;
 import org.apollo.extension.releasegen.message.parser.MessageParser;
-import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.util.Printer;
 import org.objectweb.asm.util.Textifier;
 import org.objectweb.asm.util.TraceMethodVisitor;
@@ -27,7 +23,10 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class ReleaseGenerator {
     private final ReleaseGeneratorClassLoader classLoader = new ReleaseGeneratorClassLoader(ReleaseGenerator.class.getClassLoader());
@@ -93,18 +92,6 @@ public class ReleaseGenerator {
         return null;
     }
 
-
-    public static String insnToString(AbstractInsnNode insn){
-        insn.accept(mp);
-        StringWriter sw = new StringWriter();
-        printer.print(new PrintWriter(sw));
-        printer.getText().clear();
-        return sw.toString();
-    }
-
-private static Printer printer = new Textifier();
-private static TraceMethodVisitor mp = new TraceMethodVisitor(printer);
-
     public MessageDeserializer createMessageDeserializer(MessageNode node) throws IllegalAccessException, InstantiationException, MessageNodeVisitorException {
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
         String deserializerClassName = node.getIdentifier() + "Deserializer";
@@ -114,19 +101,6 @@ private static TraceMethodVisitor mp = new TraceMethodVisitor(printer);
         cw.visitEnd();
 
         byte[] classBytes = cw.toByteArray();
-
-        ClassReader reader = new ClassReader(classBytes);
-        ClassNode classNode = new ClassNode();
-        reader.accept(classNode,0);
-        @SuppressWarnings("unchecked")
-        final List<MethodNode> methods = classNode.methods;
-        for(MethodNode m: methods){
-            InsnList inList = m.instructions;
-            System.out.println(m.name);
-            for(int i = 0; i< inList.size(); i++){
-                System.err.print(insnToString(inList.get(i)));
-            }
-        }
 
         Class<?> clazz = classLoader.defineClassProxy(deserializerClassName, classBytes, 0, classBytes.length);
 

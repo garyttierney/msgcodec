@@ -47,10 +47,10 @@ public class MessageParser extends BaseParser<Object> {
                 qualifiedIdentifier(),
                 node.setIdentifier((String) pop()),
                 zeroOrMore(
-                    sequence(attribute(), node.addAttribute((AttributeNode) pop()))
+                        sequence(attribute(), node.addAttribute((AttributeNode) pop()))
                 ),
                 oneOrMore(
-                    sequence(firstOf(compoundPropertyDefinition(), propertyDefinition()), node.addProperty((PropertyNode) pop()))
+                        sequence(firstOf(compoundPropertyDefinition(), propertyDefinition()), node.addProperty((PropertyNode) pop()))
                 ),
                 push(node)
         );
@@ -185,13 +185,22 @@ public class MessageParser extends BaseParser<Object> {
         );
     }
 
+    /**
+     * Matches an attribute declaration, similar to ruby hash synax. Matches the following:
+     * <pre>
+     *     :identifier => 200
+     *     :identifier => "literal"
+     *     :identifier => constant
+     * </pre>
+     * @return A rule which matches an attribute.
+     */
     @Label("attribute")
     public Rule attribute() {
         AttributeNode attributeNode = new AttributeNode();
 
         return sequence(
-                identifier(), attributeNode.setIdentifier(match()),
-                spacing(), EQ, spacing(),
+                ch(':').suppressNode(), identifier(), attributeNode.setIdentifier(match()),
+                spacing(), string("=>"), spacing(),
                 attributeValue(), attributeNode.setValue(match()), attributeNode.setType((AttributeType) pop()),
                 push(attributeNode)
         );
@@ -292,37 +301,19 @@ public class MessageParser extends BaseParser<Object> {
         return firstOf(charRange('a', 'z'), charRange('A', 'Z'));
     }
 
+    /**
+     * Matches a string literal, excluding new lines.
+     *
+     * @return A rule which matches a string literal.
+     */
     public Rule stringLiteral() {
         return sequence(
                 '"',
                 zeroOrMore(
-                        firstOf(
-                                Escape(),
-                                sequence(testNot(anyOf("\r\n\"\\")), ANY)
-                        )
+                        sequence(testNot(anyOf("\r\n\"\\")), ANY)
                 ).suppressSubnodes(),
                 '"'
         );
-    }
-
-    public Rule Escape() {
-        return sequence('\\', firstOf(AnyOf("btnfr\"\'\\"), OctalEscape(), UnicodeEscape()));
-    }
-
-    public Rule OctalEscape() {
-        return firstOf(
-                sequence(charRange('0', '3'), charRange('0', '7'), charRange('0', '7')),
-                sequence(charRange('0', '7'), charRange('0', '7')),
-                charRange('0', '7')
-        );
-    }
-
-    public Rule UnicodeEscape() {
-        return sequence(oneOrMore('u'), HexDigit(), HexDigit(), HexDigit(), HexDigit());
-    }
-
-    public Rule HexDigit() {
-        return firstOf(charRange('a', 'f'), charRange('A', 'F'), charRange('0', '9'));
     }
 
     @SuppressNode
@@ -330,15 +321,15 @@ public class MessageParser extends BaseParser<Object> {
         return zeroOrMore(firstOf(
 
                 // whitespace
-                oneOrMore(AnyOf(" \t\r\n\f").label("Whitespace")),
+                oneOrMore(anyOf(" \t\r\n\f").label("Whitespace")),
 
                 // traditional comment
-                sequence("/*", zeroOrMore(TestNot("*/"), ANY), "*/"),
+                sequence("/*", zeroOrMore(testNot("*/"), ANY), "*/"),
 
                 // end of line comment
                 sequence(
                         "//",
-                        zeroOrMore(TestNot(AnyOf("\r\n")), ANY),
+                        zeroOrMore(testNot(anyOf("\r\n")), ANY),
                         firstOf("\r\n", '\r', '\n', EOI)
                 )
         ));

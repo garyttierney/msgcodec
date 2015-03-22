@@ -21,6 +21,15 @@ public class MessageNode {
     }
 
     /**
+     * Return the list of property nodes from this message.
+     *
+     * @return An ordered list of property nodes.
+     */
+    public LinkedList<PropertyNode> getPropertyList() {
+        return propertyList;
+    }
+
+    /**
      * An ordered list of property nodes.
      */
     private final LinkedList<PropertyNode> propertyList = new LinkedList<>();
