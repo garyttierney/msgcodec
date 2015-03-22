@@ -12,8 +12,6 @@ import org.parboiled.annotations.BuildParseTree;
 import org.parboiled.annotations.Label;
 import org.parboiled.annotations.SuppressNode;
 
-import java.util.Set;
-
 @BuildParseTree
 public class MessageParser extends BaseParser<Object> {
     public Rule SEMICOLON = ch(';').skipNode();
@@ -39,7 +37,6 @@ public class MessageParser extends BaseParser<Object> {
      *     bool propertyC;
      * }
      * </pre>
-     *
      *
      * @return A rule which matches a full {@link MessageNode}.
      */
@@ -109,9 +106,9 @@ public class MessageParser extends BaseParser<Object> {
                 ),
                 spacing(),
                 LBRACE, spacing(),
-                    oneOrMore(
-                        sequence(spacing(), propertyDefinition(), spacing(), node.addChild((PropertyNode) pop())).label("property_decl")
-                    ).label("child_properties"),
+                oneOrMore(
+                    sequence(spacing(), propertyDefinition(), spacing(), node.addChild((PropertyNode) pop())).label("property_decl")
+                ).label("child_properties"),
                 RBRACE, spacing(),
                 push(node)
             ).label("array_definition"),
@@ -124,9 +121,9 @@ public class MessageParser extends BaseParser<Object> {
                 ),
                 spacing(),
                 LBRACE, spacing(),
-                    oneOrMore(
-                        sequence(spacing(), propertyDefinition(), spacing(), node.addChild((PropertyNode) pop())).label("property_decl")
-                    ).label("child_properties"),
+                oneOrMore(
+                    sequence(spacing(), propertyDefinition(), spacing(), node.addChild((PropertyNode) pop())).label("property_decl")
+                ).label("child_properties"),
                 RBRACE, spacing(),
                 push(node)
             ).label("definition")
@@ -196,6 +193,7 @@ public class MessageParser extends BaseParser<Object> {
      *     :identifier => "literal"
      *     :identifier => constant
      * </pre>
+     *
      * @return A rule which matches an attribute.
      */
     @Label("attribute")
@@ -261,8 +259,8 @@ public class MessageParser extends BaseParser<Object> {
      *     int32
      *     uint16
      * </pre>
-     *
-     *
+     * <p/>
+     * <p/>
      * Upon being matched a {@link IntegerPropertyType} will be pushed to the stack.
      *
      * @return A rule matching an integer type.
@@ -283,7 +281,7 @@ public class MessageParser extends BaseParser<Object> {
         String[] orderIdentifiers = DataOrder.identifiers();
         Rule[] orderRules = new Rule[orderIdentifiers.length];
 
-        for(int i = 0; i < orderRules.length; i++) {
+        for (int i = 0; i < orderRules.length; i++) {
             orderRules[i] = string(orderIdentifiers[i]);
         }
 
@@ -302,7 +300,7 @@ public class MessageParser extends BaseParser<Object> {
     /**
      * A rule matching a number literal.
      *
-     * @return  A rule matching a number literal.
+     * @return A rule matching a number literal.
      */
     public Rule number() {
         return oneOrMore(digit());

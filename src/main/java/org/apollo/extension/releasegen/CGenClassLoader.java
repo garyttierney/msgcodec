@@ -3,14 +3,14 @@ package org.apollo.extension.releasegen;
 /**
  * Class loader proxy for exposing the {@link ClassLoader#defineClass} method to define classes on the fly.
  */
-public class ReleaseGeneratorClassLoader extends ClassLoader {
+public class CGenClassLoader extends ClassLoader {
 
     /**
      * Initialize this ClassLoader with a parent ClassLoader.
      *
      * @param parent The parent class loader.
      */
-    public ReleaseGeneratorClassLoader(ClassLoader parent) {
+    public CGenClassLoader(ClassLoader parent) {
         super(parent);
     }
 

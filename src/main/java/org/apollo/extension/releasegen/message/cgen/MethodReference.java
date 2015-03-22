@@ -9,6 +9,11 @@ public class MethodReference {
     private final Class<?> owner;
     private final Method method;
 
+    public MethodReference(Class<?> owner, Method method) {
+        this.owner = owner;
+        this.method = method;
+    }
+
     /**
      * The owner of the Method.
      *
@@ -25,10 +30,5 @@ public class MethodReference {
      */
     public Method getMethod() {
         return method;
-    }
-
-    public MethodReference(Class<?> owner, Method method) {
-        this.owner = owner;
-        this.method = method;
     }
 }

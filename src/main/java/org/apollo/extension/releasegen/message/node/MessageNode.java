@@ -6,6 +6,19 @@ import java.util.Map;
 
 public class MessageNode {
     /**
+     * An ordered list of property nodes.
+     */
+    private final LinkedList<PropertyNode> propertyList = new LinkedList<>();
+    /**
+     * The Message class this MessageNode represents.
+     */
+    private String messageIdentifier;
+    /**
+     * A mapping of attribute identifiers to {@link AttributeNode} instances.
+     */
+    private Map<String, AttributeNode> attributeNodeMap = new HashMap<>();
+
+    /**
      * Accept a {@link MessageNodeVisitor} and iterate call the {@link MessageNodeVisitor#visit} methods on this object and all of its properties.
      *
      * @param visitor The MessageNodeVisitor to call.
@@ -13,7 +26,7 @@ public class MessageNode {
     public void accept(MessageNodeVisitor visitor) throws MessageNodeVisitorException {
         visitor.visit(this);
 
-        for(PropertyNode property : propertyList) {
+        for (PropertyNode property : propertyList) {
             visitor.visitPropertyNode(property);
         }
 
@@ -28,22 +41,6 @@ public class MessageNode {
     public LinkedList<PropertyNode> getPropertyList() {
         return propertyList;
     }
-
-    /**
-     * An ordered list of property nodes.
-     */
-    private final LinkedList<PropertyNode> propertyList = new LinkedList<>();
-
-    /**
-     * The Message class this MessageNode represents.
-     */
-    private String messageIdentifier;
-
-    /**
-     * A mapping of attribute identifiers to {@link AttributeNode} instances.
-     */
-    private Map<String, AttributeNode> attributeNodeMap = new HashMap<>();
-
 
     /**
      * @return The Message class represented by this MessageNode.

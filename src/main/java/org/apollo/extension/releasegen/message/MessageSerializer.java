@@ -1,5 +1,7 @@
 package org.apollo.extension.releasegen.message;
 
-public interface MessageSerializer<D> {
-    D serialize(Object message);
+import io.netty.buffer.ByteBuf;
+
+public interface MessageSerializer {
+    ByteBuf serialize(Object message);
 }

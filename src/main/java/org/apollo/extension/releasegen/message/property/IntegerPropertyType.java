@@ -17,7 +17,7 @@ public class IntegerPropertyType implements PropertyType {
     /**
      * The ordering of this Integer property, defaults to big endian.
      */
-    private DataOrder dataOrder = DataOrder.BIG_ENDIAN;
+    private DataOrder dataOrder = DataOrder.BIG;
 
     public boolean isSigned() {
         return signed;
@@ -41,7 +41,7 @@ public class IntegerPropertyType implements PropertyType {
     public Class<?> getType() {
         int numBits = signed ? bits : bits * 2; // up cast for unsigned types
 
-        switch(numBits) {
+        switch (numBits) {
             case 8:
                 return byte.class;
             case 16:

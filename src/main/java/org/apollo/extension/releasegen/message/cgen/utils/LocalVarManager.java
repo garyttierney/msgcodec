@@ -64,7 +64,7 @@ public class LocalVarManager {
         } else {
             methodVisitor.visitVarInsn(Opcodes.ASTORE, entry.slot);
         }
-     }
+    }
 
     public void push(LocalVarEntry entry) {
         if (ASMUtils.isIntegerType(entry.type)) {

@@ -7,20 +7,20 @@ import org.apollo.extension.releasegen.message.node.MessageNode;
  *
  * @param <D> The data class used for storing serialized messages, used for writing messages and reading them.
  */
-public interface MessageCodecFactory<D> {
+public interface MessageCodecFactory {
     /**
      * From a given {@link MessageNode} specification, create a MessageDeserializer that takes the type parameter <code>D</code> as input.
-     * @param messageNode The specification to create the deserializer from.
      *
+     * @param messageNode The specification to create the deserializer from.
      * @return A new deserializer instance which decodes a Message from an input <code>D</code>.
      */
-    MessageDeserializer<D> createDeserializer(MessageNode messageNode);
+    MessageDeserializer createDeserializer(MessageNode messageNode) throws MessageCodecFactoryException;
 
     /**
      * From a given {@link MessageNode} specification, create a MessageSerializer that takes a message as input, and writes it to an output type <code>D</code>.
-     * @param messageNode The specification to create the serializer from.
      *
+     * @param messageNode The specification to create the serializer from.
      * @return A new serializer instance which encodes a message to an output <code>D</code>.
      */
-    MessageSerializer<D> createSerializer(MessageNode messageNode);
+    MessageSerializer createSerializer(MessageNode messageNode) throws MessageCodecFactoryException;
 }

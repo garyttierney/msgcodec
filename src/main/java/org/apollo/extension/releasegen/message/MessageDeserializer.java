@@ -1,5 +1,7 @@
 package org.apollo.extension.releasegen.message;
 
-public interface MessageDeserializer<T> {
-    Object deserialize(T input);
+import io.netty.buffer.ByteBuf;
+
+public interface MessageDeserializer {
+    Object deserialize(ByteBuf input);
 }

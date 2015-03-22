@@ -2,7 +2,6 @@ package org.apollo.extension.releasegen.message.cgen;
 
 import org.apollo.extension.releasegen.message.cgen.utils.ASMUtils;
 import org.apollo.extension.releasegen.message.cgen.utils.LocalVarManager;
-import org.apollo.extension.releasegen.io.GamePacketReaderFactory;
 import org.apollo.extension.releasegen.message.node.*;
 import org.apollo.extension.releasegen.message.property.ArrayPropertyType;
 import org.apollo.extension.releasegen.message.property.IntegerPropertyType;
@@ -20,7 +19,7 @@ import java.nio.ByteBuffer;
 
 import static org.objectweb.asm.Opcodes.*;
 
-public class MessageDeserializerMethodWriter<D> implements MessageNodeVisitor {
+public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
     /**
      * Constant for the buffer parameter slot
      */
@@ -47,11 +46,6 @@ public class MessageDeserializerMethodWriter<D> implements MessageNodeVisitor {
     private final MethodVisitor methodWriter;
 
     /**
-     * The method reference resolver which is responsible for looking up methods required to complete read operations.
-     */
-    private final MethodReferenceResolver methodResolver;
-
-    /**
      * Label which marks the start of the methods execution.
      */
     private final Label startLabel = new Label();
@@ -67,7 +61,7 @@ public class MessageDeserializerMethodWriter<D> implements MessageNodeVisitor {
     private final LocalVarManager localVarManager;
 
     /**
-     * Introspection information on the type of Message we're deserializing.
+     * Introspection information on the type of Message we're de-serializing.
      */
     private BeanInfo messageInfo;
 
@@ -76,15 +70,13 @@ public class MessageDeserializerMethodWriter<D> implements MessageNodeVisitor {
      */
     private Class<?> messageClass;
 
-    public MessageDeserializerMethodWriter(
-        MethodVisitor writer,
-        MethodReferenceResolver methodResolver,
-        Class<D> serializedDataClass,
-        Class<? extends GamePacketReaderFactory<D>> readerFactoryClass
-    ) {
+    public MessageDeserializerMethodWriter(MethodVisitor writer) {
         this.methodWriter = writer;
-        this.methodResolver = methodResolver;
         this.localVarManager = new LocalVarManager(writer, startLabel, endLabel);
+    }
+
+    public static String getChildPropertyName(PropertyNode parent, PropertyNode child) {
+        return parent.getIdentifier() + "$" + child.getIdentifier();
     }
 
     @Override
@@ -113,7 +105,6 @@ public class MessageDeserializerMethodWriter<D> implements MessageNodeVisitor {
         }
     }
 
-
     @Override
     public void visitPropertyNode(PropertyNode node) throws MessageNodeVisitorException {
         PropertyType propertyType = node.getType();
@@ -123,8 +114,8 @@ public class MessageDeserializerMethodWriter<D> implements MessageNodeVisitor {
                 visitArrayPropertyNode(node, (ArrayPropertyType) propertyType);
             } else {
                 int slot = node instanceof CompoundPropertyNode ?
-                        readAndStoreCompoundVar((CompoundPropertyNode) node, node.getType()) :
-                        readAndStoreVar(node);
+                    readAndStoreCompoundVar((CompoundPropertyNode) node, node.getType()) :
+                    readAndStoreVar(node);
 
                 methodWriter.visitVarInsn(ALOAD, MESSAGE_SLOT);
                 localVarManager.push(slot); // push back to stack
@@ -148,16 +139,16 @@ public class MessageDeserializerMethodWriter<D> implements MessageNodeVisitor {
     }
 
     public void readAndStoreVar(int slot, PropertyType type) throws NoSuchMethodException, ClassNotFoundException {
-        MethodReference ref = methodResolver.getReadMethod(type);
+        MethodReference ref = PacketMethodReferenceResolver.getReadMethod(type);
         Method method = ref.getMethod();
 
         methodWriter.visitVarInsn(ALOAD, BUFFER_SLOT);
         methodWriter.visitMethodInsn(
-                INVOKEVIRTUAL,
-                Type.getInternalName(ref.getOwner()),
-                method.getName(),
-                Type.getMethodDescriptor(method),
-                false
+            INVOKEVIRTUAL,
+            Type.getInternalName(ref.getOwner()),
+            method.getName(),
+            Type.getMethodDescriptor(method),
+            false
         );
 
         localVarManager.store(slot);
@@ -248,7 +239,7 @@ public class MessageDeserializerMethodWriter<D> implements MessageNodeVisitor {
     }
 
     public void readAndStoreCompoundVar(int slot, CompoundPropertyNode node, PropertyType compoundPropertyType) throws ClassNotFoundException,
-            IntrospectionException, NoSuchMethodException {
+        IntrospectionException, NoSuchMethodException {
 
         Class<?> compoundObjectClass = compoundPropertyType.getType();
 
@@ -302,9 +293,5 @@ public class MessageDeserializerMethodWriter<D> implements MessageNodeVisitor {
         } else { // array size is identifier
             localVarManager.push(lengthSpecifier);
         }
-    }
-
-    public static String getChildPropertyName(PropertyNode parent, PropertyNode child) {
-        return parent.getIdentifier() + "$" + child.getIdentifier();
     }
 }

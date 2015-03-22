@@ -2,9 +2,14 @@ package org.apollo.extension.releasegen.message.property;
 
 import java.lang.reflect.Array;
 
-public class ArrayPropertyType implements PropertyType{
+public class ArrayPropertyType implements PropertyType {
     private PropertyType elementType;
     private String lengthSpecifier;
+
+    public ArrayPropertyType(PropertyType elementType, String lengthSpecifier) {
+        this.elementType = elementType;
+        this.lengthSpecifier = lengthSpecifier;
+    }
 
     public boolean setLengthSpecifier(String lengthSpecifier) {
         this.lengthSpecifier = lengthSpecifier;
@@ -18,11 +23,6 @@ public class ArrayPropertyType implements PropertyType{
     public boolean setPropertyType(PropertyType elementType) {
         this.elementType = elementType;
         return true;
-    }
-
-    public ArrayPropertyType(PropertyType elementType, String lengthSpecifier) {
-        this.elementType = elementType;
-        this.lengthSpecifier = lengthSpecifier;
     }
 
     public PropertyType getElementType() {

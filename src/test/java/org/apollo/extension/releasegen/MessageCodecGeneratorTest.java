@@ -15,9 +15,9 @@ import org.junit.Test;
 
 import java.nio.ByteBuffer;
 
-public class ReleaseGeneratorTest {
+public class MessageCodecGeneratorTest {
 
-    ReleaseGenerator generator = new ReleaseGenerator(new ByteBufferMethodReferenceResolver());
+    MessageCodecGenerator generator = new MessageCodecGenerator(new ByteBufferMethodReferenceResolver());
 
     @Test
     public void testCreateMessageSerializer() throws Exception {
