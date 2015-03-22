@@ -1,8 +1,6 @@
-package org.apollo.extension.releasegen;
+package org.apollo.extension.releasegen.message.codec;
 
 import io.netty.buffer.ByteBuf;
-import org.apollo.extension.releasegen.message.MessageDeserializer;
-import org.apollo.extension.releasegen.message.MessageSerializer;
 
 import java.util.Map;
 

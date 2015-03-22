@@ -1,9 +1,9 @@
-package org.apollo.extension.releasegen.message.cgen;
+package org.apollo.extension.releasegen.message.codec.cgen;
 
-import org.apollo.extension.releasegen.message.MessageCodecFactory;
-import org.apollo.extension.releasegen.message.MessageCodecFactoryException;
-import org.apollo.extension.releasegen.message.MessageDeserializer;
-import org.apollo.extension.releasegen.message.MessageSerializer;
+import org.apollo.extension.releasegen.message.codec.MessageCodecFactory;
+import org.apollo.extension.releasegen.message.codec.MessageCodecFactoryException;
+import org.apollo.extension.releasegen.message.codec.MessageDeserializer;
+import org.apollo.extension.releasegen.message.codec.MessageSerializer;
 import org.apollo.extension.releasegen.message.node.MessageNode;
 import org.apollo.extension.releasegen.message.node.MessageNodeVisitorException;
 import org.objectweb.asm.ClassWriter;

@@ -1,10 +1,10 @@
-package org.apollo.extension.releasegen.message.cgen;
+package org.apollo.extension.releasegen.message.codec.cgen;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.apollo.extension.releasegen.io.DataType;
-import org.apollo.extension.releasegen.message.MessageCodecFactory;
-import org.apollo.extension.releasegen.message.MessageDeserializer;
+import org.apollo.extension.releasegen.message.codec.MessageCodecFactory;
+import org.apollo.extension.releasegen.message.codec.MessageDeserializer;
 import org.apollo.extension.releasegen.message.TestMessage;
 import org.apollo.extension.releasegen.message.node.CompoundPropertyNode;
 import org.apollo.extension.releasegen.message.node.MessageNode;

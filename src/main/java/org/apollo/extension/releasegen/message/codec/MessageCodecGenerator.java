@@ -1,26 +1,45 @@
-package org.apollo.extension.releasegen;
+package org.apollo.extension.releasegen.message.codec;
 
-import org.apollo.extension.releasegen.message.MessageCodecFactory;
-import org.apollo.extension.releasegen.message.MessageDeserializer;
-import org.apollo.extension.releasegen.message.MessageSerializer;
 import org.apollo.extension.releasegen.message.node.AttributeType;
 import org.apollo.extension.releasegen.message.node.MessageNode;
 import org.apollo.extension.releasegen.message.parser.MessageParser;
-
 import org.parboiled.Parboiled;
 import org.parboiled.parserunners.ParseRunner;
 import org.parboiled.parserunners.RecoveringParseRunner;
 import org.parboiled.support.ParsingResult;
 
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 public class MessageCodecGenerator {
+    private static class MessageConfigFileVisitor extends SimpleFileVisitor<Path> {
+        public Set<Path> messageConfigPaths = new HashSet<>();
+
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+            messageConfigPaths.add(file);
+
+            return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attrs) throws IOException {
+            return FileVisitResult.CONTINUE;
+        }
+
+        public Set<Path> getMessageConfigPaths() {
+            return messageConfigPaths;
+        }
+    }
+
     private final MessageParser messageParser = Parboiled.createParser(MessageParser.class);
     private final MessageCodecFactory messageCodecFactory;
 

@@ -1,4 +1,4 @@
-package org.apollo.extension.releasegen.message;
+package org.apollo.extension.releasegen.message.codec;
 
 import org.apollo.extension.releasegen.message.node.MessageNode;
 

@@ -1,7 +1,7 @@
-package org.apollo.extension.releasegen.message.cgen;
+package org.apollo.extension.releasegen.message.codec.cgen;
 
-import org.apollo.extension.releasegen.message.cgen.utils.ASMUtils;
-import org.apollo.extension.releasegen.message.cgen.utils.LocalVarManager;
+import org.apollo.extension.releasegen.message.codec.cgen.utils.ASMUtils;
+import org.apollo.extension.releasegen.message.codec.cgen.utils.LocalVarManager;
 import org.apollo.extension.releasegen.message.node.*;
 import org.apollo.extension.releasegen.message.property.ArrayPropertyType;
 import org.apollo.extension.releasegen.message.property.IntegerPropertyType;
@@ -41,7 +41,7 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
     private static final String MESSAGE_NAME = "msg";
 
     /**
-     * Reference to the ASM MethodVisitor which generates the code for the {@link org.apollo.extension.releasegen.message.MessageDeserializer#deserialize} method.
+     * Reference to the ASM MethodVisitor which generates the code for the {@link org.apollo.extension.releasegen.message.codec.MessageDeserializer#deserialize} method.
      */
     private final MethodVisitor methodWriter;
 

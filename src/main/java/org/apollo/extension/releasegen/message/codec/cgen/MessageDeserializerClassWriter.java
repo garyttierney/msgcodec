@@ -1,6 +1,6 @@
-package org.apollo.extension.releasegen.message.cgen;
+package org.apollo.extension.releasegen.message.codec.cgen;
 
-import org.apollo.extension.releasegen.message.MessageDeserializer;
+import org.apollo.extension.releasegen.message.codec.MessageDeserializer;
 import org.apollo.extension.releasegen.message.node.MessageNode;
 import org.apollo.extension.releasegen.message.node.MessageNodeVisitor;
 import org.apollo.extension.releasegen.message.node.MessageNodeVisitorException;

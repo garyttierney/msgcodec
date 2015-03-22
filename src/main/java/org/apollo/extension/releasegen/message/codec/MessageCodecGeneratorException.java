@@ -1,4 +1,4 @@
-package org.apollo.extension.releasegen;
+package org.apollo.extension.releasegen.message.codec;
 
 public class MessageCodecGeneratorException extends Exception {
     public MessageCodecGeneratorException(String message, Exception prev) {

@@ -1,4 +1,4 @@
-package org.apollo.extension.releasegen.message.cgen.utils;
+package org.apollo.extension.releasegen.message.codec.cgen.utils;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
