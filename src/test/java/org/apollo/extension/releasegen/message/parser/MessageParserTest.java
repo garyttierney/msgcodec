@@ -99,18 +99,19 @@ public class MessageParserTest {
 
     @Test
     public void testAttribute_Reference() throws Exception {
-        String input = "test = whateverValue";
+        String input = ":test => whateverValue";
         ParsingResult<?> result = new RecoveringParseRunner<MessageNode>(parser.attribute()).run(input);
         AttributeNode attribute = (AttributeNode) result.resultValue;
 
         Assert.assertEquals(AttributeType.REFERENCE, attribute.getType());
+
         Assert.assertEquals("whateverValue", attribute.getValue());
         Assert.assertEquals("test", attribute.getIdentifier());
     }
 
     @Test
     public void testAttribute_NumberLiteral() throws Exception {
-        String input = "test = 1001";
+        String input = ":test => 1001";
         ParsingResult<?> result = new RecoveringParseRunner<MessageNode>(parser.attribute()).run(input);
         AttributeNode attribute = (AttributeNode) result.resultValue;
 
@@ -121,7 +122,7 @@ public class MessageParserTest {
 
     @Test
     public void testAttribute_StringLiteral() throws Exception {
-        String input = "test = \"1001\"";
+        String input = ":test => \"1001\"";
         ParsingResult<?> result = new RecoveringParseRunner<MessageNode>(parser.attribute()).run(input);
         AttributeNode attribute = (AttributeNode) result.resultValue;
 

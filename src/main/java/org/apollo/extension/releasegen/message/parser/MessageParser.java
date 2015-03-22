@@ -201,7 +201,7 @@ public class MessageParser extends BaseParser<Object> {
         return sequence(
             ch(':').suppressNode(), identifier(), attributeNode.setIdentifier(match()),
             spacing(), string("=>"), spacing(),
-            attributeValue(), spacing(), attributeNode.setValue(match()), attributeNode.setType((AttributeType) pop()),
+            attributeValue(), attributeNode.setValue(match()), attributeNode.setType((AttributeType) pop()), spacing(),
             push(attributeNode)
         );
     }
