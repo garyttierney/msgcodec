@@ -1,4 +1,4 @@
-package org.apollo.extension.releasegen.cgen;
+package org.apollo.extension.releasegen.cgen.utils;
 
 import org.apollo.extension.releasegen.message.node.PropertyNode;
 import org.objectweb.asm.Label;
@@ -20,6 +20,11 @@ public class LocalVarManager {
         this.methodVisitor = methodVisitor;
         this.methodStartLabel = methodStartLabel;
         this.methodEndLabel = methodEndLabel;
+    }
+
+
+    public int allocate(String name, Class<?> type) {
+        return allocate(name, type, null, null);
     }
 
     public int allocate(String name, Class<?> type, Label startLabel, Label endLabel) {

@@ -1,5 +1,6 @@
 package org.apollo.extension.releasegen.cgen;
 
+import org.apollo.extension.releasegen.cgen.utils.LocalVarManager;
 import org.apollo.extension.releasegen.message.node.*;
 import org.apollo.extension.releasegen.message.property.ArrayPropertyType;
 import org.apollo.extension.releasegen.message.property.IntegerPropertyType;
@@ -14,8 +15,6 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.objectweb.asm.Opcodes.*;
 
@@ -44,6 +43,7 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
      * Reference to the ASM MethodVisitor which generates the code for the {@link org.apollo.extension.releasegen.message.MessageDeserializer#deserialize} method.
      */
     private final MethodVisitor methodWriter;
+    private final MethodReferenceResolver methodResolver;
 
     /**
      * Label which marks the start of the methods execution.
@@ -56,23 +56,24 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
     private final Label endLabel = new Label();
 
     /**
+     * Local variable manager for dealing with tracking slots of local vars.
+     */
+    private final LocalVarManager localVarManager;
+
+    /**
      * Introspection information on the type of Message we're deserializing.
      */
     private BeanInfo messageInfo;
-
-    /**
-     * Local variable count, start at 3 to allocate space for constants.
-     */
-    private final LocalVarManager localVarManager;
 
     /**
      * The Message class which will be decoded by the generated deserializer.
      */
     private Class<?> messageClass;
 
-    public MessageDeserializerMethodWriter(MethodVisitor writer) {
+    public MessageDeserializerMethodWriter(MethodVisitor writer, MethodReferenceResolver methodResolver) {
         this.methodWriter = writer;
-        this.localVarManager = new LocalVarManager(writer);
+        this.methodResolver = methodResolver;
+        this.localVarManager = new LocalVarManager(writer, startLabel, endLabel);
     }
 
     @Override
@@ -93,50 +94,49 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
     }
 
     @Override
-    public void visitPropertyNode(PropertyNode node) throws MessageNodeVisitorException{
+    public void visitPropertyNode(PropertyNode node) throws MessageNodeVisitorException {
         PropertyType propertyType = node.getType();
+
         try {
-            if (propertyType instanceof IntegerPropertyType) {
-                visitIntPropertyNode(node, (IntegerPropertyType) propertyType);
-            } else if (propertyType instanceof ArrayPropertyType) {
+            if (propertyType instanceof ArrayPropertyType) {
                 visitArrayPropertyNode(node, (ArrayPropertyType) propertyType);
             } else {
-                visitObjectPropertyNode(node, propertyType);
+                int slot = readAndStoreVar(node);
+
+                localVarManager.push(slot); // push back to stack
+
+                PropertyDescriptor descriptor = getPropertyDescriptor(node.getIdentifier());
+                Method writeMethod = descriptor.getWriteMethod();
+
+                // call setter with local var
+                methodWriter.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(messageClass), writeMethod.getName(), Type.getMethodDescriptor(writeMethod), false);
             }
         } catch (Exception ex) {
             throw new MessageNodeVisitorException("Unable to create bytecode to deserialize property \"" + node.getIdentifier() + "\"", ex);
         }
     }
 
-    private void visitObjectPropertyNode(PropertyNode node, PropertyType propertyType) {
+    public int readAndStoreVar(PropertyNode node) throws ClassNotFoundException {
+        int slot = localVarManager.allocate(node.getIdentifier(), node.getType().getType());
 
+        readAndStoreVar(slot, node.getType());
+        return slot;
     }
 
-    public void readAndStoreIntPropertyNode(PropertyNode node, IntegerPropertyType type) {
-        Class<?> intType = type.getType();
-
-        int slot = localVarManager.allocate(node.getIdentifier(), intType);
+    public void readAndStoreVar(int slot, PropertyType type) {
+        MethodReference ref = methodResolver.getReadMethod(type);
+        Method method = ref.getMethod();
 
         methodWriter.visitMethodInsn(
-                INVOKESPECIAL,
-                Type.getInternalName(ByteBuffer.class),
-                MessageUtils.getByteBufferReadMethod(type),
-                Type.getMethodDescriptor(Type.getType(type.getType())),
-                false
+            INVOKESPECIAL,
+            Type.getInternalName(ref.getOwner()),
+            method.getName(),
+            Type.getMethodDescriptor(method),
+            false
         );
 
-        localVarManager.store(slot); // store method result to local var
-     }
+        localVarManager.store(slot);
 
-    public void visitIntPropertyNode(PropertyNode node, IntegerPropertyType type) {
-        readAndStoreIntPropertyNode(node, type); // read and store value
-        localVarManager.push(node); // push back to stack
-
-        PropertyDescriptor descriptor = getPropertyDescriptor(node.getIdentifier());
-        Method writeMethod = descriptor.getWriteMethod();
-
-        // call setter with local var
-        methodWriter.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(messageClass), writeMethod.getName(), Type.getMethodDescriptor(writeMethod), false);
     }
 
     public void visitCompoundArrayPropertyNode(CompoundPropertyNode node, ArrayPropertyType type) {
@@ -156,11 +156,10 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
         }
 
         int slot = localVarManager.allocate(node.getIdentifier(), valueType);
-        methodWriter.visitVarInsn(ASTORE, slot);
+        localVarManager.store(slot);
 
-
-        Label loopEndLabel = new Label();
         Label loopStartLabel = new Label();
+        Label loopEndLabel = new Label();
         methodWriter.visitLabel(loopStartLabel);
 
         int counterSlot = localVarManager.allocate("counter_" + node.getIdentifier(), int.class);
@@ -174,11 +173,24 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
 
         { // counter < length
             methodWriter.visitLabel(loopLabel);
+
             localVarManager.push(counterSlot);
             pushArrayLength(type.getLengthSpecifier());
+
             methodWriter.visitJumpInsn(IF_ICMPGE, loopEndLabel);
+
+            int elementSlot = localVarManager.allocate(node.getIdentifier() + "_el", elementType.getType(), loopLabel, loopEndLabel);
+            readAndStoreVar(elementSlot, elementType);
+
+            localVarManager.push(slot);
+            localVarManager.push(counterSlot);
+            localVarManager.push(elementSlot);
+
+            methodWriter.visitInsn(AALOAD);
         }
 
+        methodWriter.visitIincInsn(counterSlot, 1);
+        methodWriter.visitJumpInsn(GOTO, loopLabel);
         methodWriter.visitLabel(loopEndLabel);
 
     }
@@ -198,16 +210,6 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
 
     }
 
-    public int getLocalVarSlot(String propertyName) {
-        for(Map.Entry<Integer, String> node : localVarMap.entrySet()) {
-            if (node.getValue().equals(propertyName)) {
-                return node.getKey();
-            }
-        }
-
-        return -1;
-    }
-
     public PropertyDescriptor getPropertyDescriptor(String propertyName) {
         for (PropertyDescriptor descriptor : messageInfo.getPropertyDescriptors()) {
             if (descriptor.getName().equals(propertyName)) {
@@ -225,7 +227,7 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
         if (lengthSpecifierIsConst) {
             methodWriter.visitIntInsn(SIPUSH, Integer.valueOf(lengthSpecifier));
         } else { // array size is identifier
-            methodWriter.visitVarInsn(ALOAD, getLocalVarSlot(lengthSpecifier));
+            localVarManager.push(lengthSpecifier);
         }
     }
 }
