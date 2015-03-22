@@ -1,9 +1,18 @@
 package org.apollo.extension.releasegen.message;
 
 public class TestMessage {
-    private int test;
-    private short testB;
-    private short[] testC;
+    public int test;
+    public short testB;
+    public short[] testC;
+    public TestCompoundMessage[] testD;
+
+    public TestCompoundMessage[] getTestD() {
+        return testD;
+    }
+
+    public void setTestD(TestCompoundMessage[] testD) {
+        this.testD = testD;
+    }
 
     public void setTest(int test) {
         this.test = test;

@@ -113,13 +113,13 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
                 visitArrayPropertyNode(node, (ArrayPropertyType) propertyType);
             } else {
                 int slot = node instanceof CompoundPropertyNode ?
-                        readAndStoreCompoundVar((CompoundPropertyNode) node) :
+                        readAndStoreCompoundVar((CompoundPropertyNode) node, node.getType()) :
                         readAndStoreVar(node);
 
                 methodWriter.visitVarInsn(ALOAD, MESSAGE_SLOT);
                 localVarManager.push(slot); // push back to stack
 
-                PropertyDescriptor descriptor = ASMUtils.getPropertyDescriptor(messageInfo, node.getIdentifier());
+                PropertyDescriptor descriptor = ASMUtils.getPropertyDescriptor(messageClass, node.getIdentifier());
                 Method writeMethod = descriptor.getWriteMethod();
 
                 // call setter with local var
@@ -163,7 +163,7 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
         if (elementType instanceof IntegerPropertyType) {
             methodWriter.visitIntInsn(NEWARRAY, ASMUtils.getIntegerArrayType(elementType.getType()));
         } else {
-            methodWriter.visitTypeInsn(ANEWARRAY, Type.getInternalName(valueType));
+            methodWriter.visitTypeInsn(ANEWARRAY, Type.getInternalName(elementType.getType()));
         }
 
         int slot = localVarManager.allocate(node.getIdentifier(), valueType);
@@ -191,7 +191,7 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
 
             int elementSlot = localVarManager.allocate(node.getIdentifier() + "_el", elementType.getType(), loopLabel, loopEndLabel);
             if (node instanceof CompoundPropertyNode) {
-                readAndStoreCompoundVar(elementSlot, (CompoundPropertyNode) node);
+                readAndStoreCompoundVar(elementSlot, (CompoundPropertyNode) node, elementType);
             } else {
                 readAndStoreVar(elementSlot, elementType);
             }
@@ -223,7 +223,7 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
         methodWriter.visitVarInsn(ALOAD, MESSAGE_SLOT);
         localVarManager.push(slot); // push back to stack
 
-        PropertyDescriptor descriptor = ASMUtils.getPropertyDescriptor(messageInfo, node.getIdentifier());
+        PropertyDescriptor descriptor = ASMUtils.getPropertyDescriptor(messageClass, node.getIdentifier());
         Method writeMethod = descriptor.getWriteMethod();
 
         // call setter with local var
@@ -232,19 +232,30 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
 
     }
 
-    public int readAndStoreCompoundVar(CompoundPropertyNode node) throws ClassNotFoundException, IntrospectionException, NoSuchMethodException {
+    public int readAndStoreCompoundVar(CompoundPropertyNode node, PropertyType compoundPropertyType) throws ClassNotFoundException, IntrospectionException, NoSuchMethodException {
         int slot = localVarManager.allocate(node.getIdentifier(), node.getType().getType());
 
-        readAndStoreCompoundVar(slot, node);
+        readAndStoreCompoundVar(slot, node, compoundPropertyType);
         return slot;
     }
 
-    public void readAndStoreCompoundVar(int slot, CompoundPropertyNode node) throws ClassNotFoundException, IntrospectionException, NoSuchMethodException {
-        Class<?> compoundObjectClass = node.getType().getType();
-        BeanInfo compoundObjectInfo = Introspector.getBeanInfo(compoundObjectClass);
+    public void readAndStoreCompoundVar(int slot, CompoundPropertyNode node, PropertyType compoundPropertyType) throws ClassNotFoundException, IntrospectionException, NoSuchMethodException {
+        Class<?> compoundObjectClass = compoundPropertyType.getType();
+
+        methodWriter.visitTypeInsn(NEW, Type.getInternalName(compoundObjectClass));
+        methodWriter.visitInsn(DUP);
+        methodWriter.visitMethodInsn(
+            INVOKESPECIAL,
+            Type.getInternalName(compoundObjectClass),
+            "<init>",
+            Type.getConstructorDescriptor(compoundObjectClass.getConstructor()),
+            false
+        );
+
+        localVarManager.store(slot);
 
         for (PropertyNode child : node.getChildren()) {
-            PropertyDescriptor propertyDescriptor = ASMUtils.getPropertyDescriptor(compoundObjectInfo, child.getIdentifier());
+            PropertyDescriptor propertyDescriptor = ASMUtils.getPropertyDescriptor(compoundObjectClass, child.getIdentifier());
             Method writeMethod = propertyDescriptor.getWriteMethod();
 
             int childSlot = localVarManager.getOrAllocate(getChildPropertyName(node, child), child.getType().getType());
