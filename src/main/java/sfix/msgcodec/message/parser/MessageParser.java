@@ -44,26 +44,26 @@ public class MessageParser extends BaseParser<Object> {
      */
     @Label("message")
     public Rule messageNode() {
-        MessageNode node = new MessageNode();
-
+        final Var<MessageNode> nodeVar = new Var<>(new MessageNode());
+        
         return sequence(
             qualifiedIdentifier(),
-            node.setIdentifier((String) pop()),
+            nodeVar.getNonnull().setIdentifier((String) pop()),
             optional(
                 sequence(
-                    attribute(), node.addAttribute((AttributeNode) pop()),
+                    attribute(), nodeVar.getNonnull().addAttribute((AttributeNode) pop()),
                     zeroOrMore(
-                        sequence(ch(','), attribute(), node.addAttribute((AttributeNode) pop()))
+                        sequence(ch(','), attribute(), nodeVar.getNonnull().addAttribute((AttributeNode) pop()))
                     )
                 )
             ),
             zeroOrMore(
-                sequence(attribute(), node.addAttribute((AttributeNode) pop()))
+                sequence(attribute(), nodeVar.getNonnull().addAttribute((AttributeNode) pop()))
             ),
             oneOrMore(
-                sequence(spacing(), firstOf(compoundPropertyDefinition(), propertyDefinition()), node.addProperty((PropertyNode) pop()))
+                sequence(spacing(), firstOf(compoundPropertyDefinition(), propertyDefinition()), nodeVar.getNonnull().addProperty((PropertyNode) pop()))
             ),
-            push(node)
+            push(nodeVar.getAndSet(new MessageNode()))
         );
     }
 
