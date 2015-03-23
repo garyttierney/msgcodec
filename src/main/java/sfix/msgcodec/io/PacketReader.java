@@ -22,7 +22,7 @@ public class PacketReader {
      * @throws IllegalStateException If this reader is not in byte access mode.
      * @throws IllegalArgumentException If the combination is invalid.
      */
-    private long get(DataType type, DataOrder order, DataTransformation transformation) {
+    public long get(DataType type, DataOrder order, DataTransformation transformation) {
         long longValue = 0;
         int length = type.getBytes();
         if (order == DataOrder.BIG) {

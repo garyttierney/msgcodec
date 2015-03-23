@@ -1,11 +1,13 @@
 package sfix.msgcodec.message.codec.cgen;
 
+import io.netty.buffer.ByteBuf;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 import sfix.msgcodec.io.DataOrder;
 import sfix.msgcodec.io.DataTransformation;
 import sfix.msgcodec.io.DataType;
+import sfix.msgcodec.io.PacketReader;
 import sfix.msgcodec.message.codec.cgen.utils.ASMUtils;
 import sfix.msgcodec.message.codec.cgen.utils.LocalVarManager;
 import sfix.msgcodec.message.node.*;
@@ -18,7 +20,6 @@ import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
-import java.nio.ByteBuffer;
 
 import static org.objectweb.asm.Opcodes.*;
 
@@ -32,6 +33,16 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
      * Constant for the message local var slot
      */
     private static final int MESSAGE_SLOT = 2;
+
+    /**
+     * Constant for the PacketReader local var slot.
+     */
+    private static final int READER_SLOT = 3;
+
+    /**
+     * Constant for the PacketReader local var name.
+     */
+    private static final String READER_NAME = "packetReader";
 
     /**
      * Constant for the variable name of the buffer
@@ -91,6 +102,17 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
             messageClass = Class.forName(node.getIdentifier());
             messageInfo = Introspector.getBeanInfo(messageClass);
 
+            methodWriter.visitTypeInsn(NEW, Type.getInternalName(PacketReader.class));
+            methodWriter.visitInsn(DUP);
+            methodWriter.visitVarInsn(ALOAD, BUFFER_SLOT);
+            methodWriter.visitMethodInsn(
+                INVOKESPECIAL,
+                Type.getInternalName(PacketReader.class),
+                "<init>",
+                Type.getConstructorDescriptor(PacketReader.class.getConstructor(ByteBuf.class)),
+                false
+            );
+            methodWriter.visitVarInsn(ASTORE, READER_SLOT);
             methodWriter.visitTypeInsn(NEW, Type.getInternalName(messageClass));
             methodWriter.visitInsn(DUP);
             methodWriter.visitMethodInsn(
@@ -145,18 +167,20 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
         MethodReference ref = PacketMethodReferenceResolver.getReadMethod(type);
         Method method = ref.getMethod();
 
-        methodWriter.visitVarInsn(ALOAD, BUFFER_SLOT);
+        methodWriter.visitVarInsn(ALOAD, READER_SLOT);
         if (type instanceof IntegerPropertyType) {
             IntegerPropertyType intType = (IntegerPropertyType) type;
-            methodWriter.visitFieldInsn(PUTSTATIC, Type.getInternalName(DataType.class), intType.getDataType().name(), Type.getDescriptor(DataType.class));
-            methodWriter.visitFieldInsn(PUTSTATIC, Type.getInternalName(DataOrder.class), intType.getDataOrder().name(), Type.getDescriptor(DataOrder.class));
+
+            methodWriter.visitFieldInsn(GETSTATIC, Type.getInternalName(DataType.class), intType.getDataType().name(), Type.getDescriptor(DataType.class));
+            methodWriter.visitFieldInsn(GETSTATIC, Type.getInternalName(DataOrder.class), intType.getDataOrder().name(), Type.getDescriptor(DataOrder.class));
             methodWriter.visitFieldInsn(
-                PUTSTATIC,
+                GETSTATIC,
                 Type.getInternalName(DataTransformation.class),
                 intType.getDataTransformation().name(),
                 Type.getDescriptor(DataTransformation.class)
             );
         }
+
 
         methodWriter.visitMethodInsn(
             INVOKEVIRTUAL,
@@ -166,8 +190,20 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
             false
         );
 
-        localVarManager.store(slot);
+        if (type instanceof IntegerPropertyType) {
+            Class<?> intType = type.getType();
+            if (intType == int.class) {
+                methodWriter.visitInsn(L2I);
+            } else if (intType == short.class) {
+                methodWriter.visitInsn(L2I);
+                methodWriter.visitInsn(I2S);
+            } else if (intType == byte.class) {
+                methodWriter.visitInsn(L2I);
+                methodWriter.visitInsn(I2B);
+            }
+        }
 
+        localVarManager.store(slot);
     }
 
     public void visitArrayPropertyNode(PropertyNode node, ArrayPropertyType type) throws ClassNotFoundException, IntrospectionException, NoSuchMethodException {
@@ -290,12 +326,13 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
         methodWriter.visitLabel(endLabel);
 
         methodWriter.visitLocalVariable("this", Type.getDescriptor(messageClass), null, startLabel, endLabel, 0);
-        methodWriter.visitLocalVariable(BUFFER_NAME, Type.getDescriptor(ByteBuffer.class), null, startLabel, endLabel, BUFFER_SLOT);
+        methodWriter.visitLocalVariable(BUFFER_NAME, Type.getDescriptor(ByteBuf.class), null, startLabel, endLabel, BUFFER_SLOT);
         methodWriter.visitLocalVariable(MESSAGE_NAME, Type.getDescriptor(Object.class), null, startLabel, endLabel, MESSAGE_SLOT);
+        methodWriter.visitLocalVariable(READER_NAME, Type.getDescriptor(PacketReader.class), null, startLabel, endLabel, READER_SLOT);
 
         localVarManager.visitLocalVariables();
 
-        methodWriter.visitMaxs(1, 1);
+        methodWriter.visitMaxs(255, 255);
         methodWriter.visitEnd();
     }
 

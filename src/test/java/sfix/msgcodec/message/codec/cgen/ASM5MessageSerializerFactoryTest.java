@@ -20,7 +20,7 @@ public class ASM5MessageSerializerFactoryTest {
     @Test
     public void testCreateMessageDeserializer() throws Exception {
         MessageNode node = new MessageNode();
-        node.setIdentifier("org.apollo.extension.releasegen.message.TestMessage");
+        node.setIdentifier("sfix.msgcodec.message.TestMessage");
 
         {
             PropertyNode propertyNode = new PropertyNode();
@@ -66,7 +66,7 @@ public class ASM5MessageSerializerFactoryTest {
             CompoundPropertyNode propertyNode = new CompoundPropertyNode();
             propertyNode.setIdentifier("testD");
 
-            PropertyType elementType = new SimplePropertyType("org.apollo.extension.releasegen.message.TestCompoundMessage");
+            PropertyType elementType = new SimplePropertyType("sfix.msgcodec.message.TestCompoundMessage");
             ArrayPropertyType propertyType = new ArrayPropertyType(elementType, "2");
 
             propertyNode.setType(propertyType);

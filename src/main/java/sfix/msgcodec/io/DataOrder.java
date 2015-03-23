@@ -50,6 +50,8 @@ public enum DataOrder {
     }
 
     /**
+     * Iterate through all of the DataOrder values and create an array of their identifiers.
+     *
      * @return An array of identifiers for all given <code>DataOrder</code>s.
      */
     public static String[] identifiers() {

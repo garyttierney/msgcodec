@@ -14,7 +14,7 @@ public class LocalVarManager {
     private final Label methodEndLabel;
     private Set<LocalVarEntry> localVarEntries = new HashSet<>();
 
-    private int localVarCount = 3;
+    private int localVarCount = 4;
 
     public LocalVarManager(MethodVisitor methodVisitor, Label methodStartLabel, Label methodEndLabel) {
         this.methodVisitor = methodVisitor;

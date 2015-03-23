@@ -1,14 +1,15 @@
 package sfix.msgcodec.message.codec.cgen;
 
+import io.netty.buffer.ByteBuf;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Type;
 import sfix.msgcodec.message.codec.MessageDeserializer;
 import sfix.msgcodec.message.node.MessageNode;
 import sfix.msgcodec.message.node.MessageNodeVisitor;
 import sfix.msgcodec.message.node.MessageNodeVisitorException;
 import sfix.msgcodec.message.node.PropertyNode;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Type;
 
 import java.lang.reflect.Method;
 
@@ -58,7 +59,7 @@ public class MessageDeserializerClassWriter implements MessageNodeVisitor {
 
         Method deserializeMethod;
         try {
-            deserializeMethod = deserializerInterface.getMethod("deserialize");
+            deserializeMethod = deserializerInterface.getMethod("deserialize", ByteBuf.class);
         } catch (NoSuchMethodException e) {
             throw new MessageNodeVisitorException("Unable to find deserialize method in MessageDeserializer interface!", e);
         }
