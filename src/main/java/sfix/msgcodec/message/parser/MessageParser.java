@@ -209,7 +209,7 @@ public class MessageParser extends BaseParser<Object> {
      */
     @Label("attribute")
     public Rule attribute() {
-        AttributeNode attributeNode = new AttributeNode();
+        AttributeNode attributeNode = new AttributeNode(); //@todo - replace w/ var
 
         return sequence(
             ch(':').suppressNode(), identifier(), attributeNode.setIdentifier(match()),
@@ -277,19 +277,19 @@ public class MessageParser extends BaseParser<Object> {
      * @return A rule matching an integer type.
      */
     public Rule intType() {
-        IntegerPropertyType intType = new IntegerPropertyType();
-
+        Var<IntegerPropertyType> intTypeVar = new Var<>(new IntegerPropertyType());
+        
         return sequence(
-            optional(sequence(ch('u'), intType.setSigned(false))).suppressSubnodes(),
+            optional(sequence(ch('u'), intTypeVar.getNonnull().setSigned(false))).suppressSubnodes(),
             string("int").suppressNode(),
             sequence(
                 oneOrMore(digit()),
-                intType.setDataType(
+                intTypeVar.getNonnull().setDataType(
                     DataType.fromBits(Integer.valueOf(match()))
                 ),
-                optional(sequence(intTypeDataOrder(), intType.setDataOrder((DataOrder) pop())))
+                optional(sequence(intTypeDataOrder(), intTypeVar.getNonnull().setDataOrder((DataOrder) pop())))
             ),
-            push(intType)
+            push(intTypeVar.getAndSet(new IntegerPropertyType()))
         );
     }
 
