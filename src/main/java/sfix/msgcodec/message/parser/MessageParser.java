@@ -209,13 +209,13 @@ public class MessageParser extends BaseParser<Object> {
      */
     @Label("attribute")
     public Rule attribute() {
-        AttributeNode attributeNode = new AttributeNode(); //@todo - replace w/ var
+        Var<AttributeNode> attributeNodeVar = new Var<>(new AttributeNode());
 
         return sequence(
-            ch(':').suppressNode(), identifier(), attributeNode.setIdentifier(match()),
+            ch(':').suppressNode(), identifier(), attributeNodeVar.getNonnull().setIdentifier(match()),
             spacing(), string("=>"), spacing(),
-            attributeValue(), attributeNode.setValue(match()), attributeNode.setType((AttributeType) pop()), spacing(),
-            push(attributeNode)
+            attributeValue(), attributeNodeVar.getNonnull().setValue(match()), attributeNodeVar.getNonnull().setType((AttributeType) pop()), spacing(),
+            push(attributeNodeVar.getAndSet(new AttributeNode()))
         );
     }
 
