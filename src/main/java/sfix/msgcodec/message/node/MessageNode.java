@@ -2,6 +2,7 @@ package sfix.msgcodec.message.node;
 
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 public class MessageNode {
@@ -17,6 +18,7 @@ public class MessageNode {
      * A mapping of attribute identifiers to {@link AttributeNode} instances.
      */
     private Map<String, AttributeNode> attributeNodeMap = new HashMap<>();
+    private List<AttributeNode> attributeList;
 
     /**
      * Accept a {@link MessageNodeVisitor} and iterate call the {@link MessageNodeVisitor#visit} methods on this object and all of its properties.
@@ -98,5 +100,14 @@ public class MessageNode {
      */
     public AttributeNode getAttribute(String identifier) {
         return attributeNodeMap.get(identifier);
+    }
+
+    public boolean setAttributeList(List<AttributeNode> attributeList) {
+        this.attributeList = attributeList;
+        return true;
+    }
+
+    public List<AttributeNode> getAttributeList() {
+        return attributeList;
     }
 }

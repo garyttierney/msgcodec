@@ -1,8 +1,5 @@
 package sfix.msgcodec.message.parser;
 
-import sfix.msgcodec.io.DataType;
-import sfix.msgcodec.message.property.ArrayPropertyType;
-import sfix.msgcodec.message.property.IntegerPropertyType;
 import org.junit.Assert;
 import org.junit.Test;
 import org.parboiled.Parboiled;
@@ -10,7 +7,12 @@ import org.parboiled.parserunners.ErrorLocatingParseRunner;
 import org.parboiled.parserunners.RecoveringParseRunner;
 import org.parboiled.support.ParseTreeUtils;
 import org.parboiled.support.ParsingResult;
+import sfix.msgcodec.io.DataType;
 import sfix.msgcodec.message.node.*;
+import sfix.msgcodec.message.property.ArrayPropertyType;
+import sfix.msgcodec.message.property.IntegerPropertyType;
+
+import java.util.List;
 
 public class MessageParserTest {
     MessageParser parser = Parboiled.createParser(MessageParser.class);
@@ -141,5 +143,15 @@ public class MessageParserTest {
 
         Assert.assertEquals(DataType.INT, type.getDataType());
         Assert.assertFalse(type.isSigned());
+    }
+
+    @Test
+    public void testAttributeMap() throws Exception {
+        String input = ":test => 202, :test2 => whatever";
+        ParsingResult<List<AttributeNode>> result = new RecoveringParseRunner<List<AttributeNode>>(parser.attributeList()).run(input);
+        List<AttributeNode> attrList = result.resultValue;
+        System.out.println(ParseTreeUtils.printNodeTree(result));
+
+        Assert.assertEquals(2, attrList.size());
     }
 }

@@ -1,5 +1,11 @@
 package sfix.msgcodec.message.parser;
 
+import org.parboiled.BaseParser;
+import org.parboiled.Rule;
+import org.parboiled.annotations.BuildParseTree;
+import org.parboiled.annotations.Label;
+import org.parboiled.annotations.SuppressNode;
+import org.parboiled.support.Var;
 import sfix.msgcodec.io.DataOrder;
 import sfix.msgcodec.io.DataType;
 import sfix.msgcodec.message.node.*;
@@ -7,12 +13,9 @@ import sfix.msgcodec.message.property.ArrayPropertyType;
 import sfix.msgcodec.message.property.IntegerPropertyType;
 import sfix.msgcodec.message.property.PropertyType;
 import sfix.msgcodec.message.property.SimplePropertyType;
-import org.parboiled.BaseParser;
-import org.parboiled.Rule;
-import org.parboiled.annotations.BuildParseTree;
-import org.parboiled.annotations.Label;
-import org.parboiled.annotations.SuppressNode;
-import org.parboiled.support.Var;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @BuildParseTree
 public class MessageParser extends BaseParser<Object> {
@@ -43,22 +46,15 @@ public class MessageParser extends BaseParser<Object> {
      * @return A rule which matches a full {@link sfix.msgcodec.message.node.MessageNode}.
      */
     @Label("message")
+    @SuppressWarnings("unchecked")
     public Rule messageNode() {
         final Var<MessageNode> nodeVar = new Var<>(new MessageNode());
-        
+
         return sequence(
             qualifiedIdentifier(),
             nodeVar.getNonnull().setIdentifier((String) pop()),
             optional(
-                sequence(
-                    attribute(), nodeVar.getNonnull().addAttribute((AttributeNode) pop()),
-                    zeroOrMore(
-                        sequence(ch(','), attribute(), nodeVar.getNonnull().addAttribute((AttributeNode) pop()))
-                    )
-                )
-            ),
-            zeroOrMore(
-                sequence(attribute(), nodeVar.getNonnull().addAttribute((AttributeNode) pop()))
+               sequence(attributeList(), nodeVar.getNonnull().setAttributeList((List<AttributeNode>) pop()))
             ),
             oneOrMore(
                 sequence(spacing(), firstOf(compoundPropertyDefinition(), propertyDefinition()), nodeVar.getNonnull().addProperty((PropertyNode) pop()))
@@ -198,6 +194,27 @@ public class MessageParser extends BaseParser<Object> {
     }
 
     /**
+     * Matches an attribute list, similar to ruby hash syntax. Matches the following:
+     * <pre>
+     *     :attrName => attrValue, :attrNameB => "attrValue",  :attrNameC => 1001
+     * </pre>
+     *
+     * @return A rule which matches an attribute list.
+     */
+    public Rule attributeList() {
+        Var<List<AttributeNode>> attributeListVar = new Var<List<AttributeNode>>(new ArrayList<AttributeNode>());
+
+        return sequence(
+            spacing(), attribute(), attributeListVar.getNonnull().add((AttributeNode) pop()), spacing(),
+            zeroOrMore(
+                sequence(ch(','), spacing(), attribute(), attributeListVar.getNonnull().add((AttributeNode) pop()), spacing())
+            ),
+
+            push(attributeListVar.getAndSet(new ArrayList<AttributeNode>()))
+        );
+    }
+
+    /**
      * Matches an attribute declaration, similar to ruby hash synax. Matches the following:
      * <pre>
      *     :identifier => 200
@@ -212,7 +229,7 @@ public class MessageParser extends BaseParser<Object> {
         Var<AttributeNode> attributeNodeVar = new Var<>(new AttributeNode());
 
         return sequence(
-            ch(':').suppressNode(), identifier(), attributeNodeVar.getNonnull().setIdentifier(match()),
+            ch(':'), identifier(), attributeNodeVar.getNonnull().setIdentifier(match()),
             spacing(), string("=>"), spacing(),
             attributeValue(), attributeNodeVar.getNonnull().setValue(match()), attributeNodeVar.getNonnull().setType((AttributeType) pop()), spacing(),
             push(attributeNodeVar.getAndSet(new AttributeNode()))
@@ -278,7 +295,7 @@ public class MessageParser extends BaseParser<Object> {
      */
     public Rule intType() {
         Var<IntegerPropertyType> intTypeVar = new Var<>(new IntegerPropertyType());
-        
+
         return sequence(
             optional(sequence(ch('u'), intTypeVar.getNonnull().setSigned(false))).suppressSubnodes(),
             string("int").suppressNode(),
