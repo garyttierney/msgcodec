@@ -7,10 +7,14 @@ import sfix.msgcodec.message.property.PropertyType;
 public class PacketMethodReferenceResolver {
     private static final Class<PacketReader> READER_CLASS = PacketReader.class;
     private static final Class<PacketBuilder> BUILDER_CLASS = PacketBuilder.class;
-    
+
     public static MethodReference getReadMethod(PropertyType type) throws NoSuchMethodException, ClassNotFoundException {
         if (type instanceof IntegerPropertyType) {
-            return new MethodReference(READER_CLASS, READER_CLASS.getDeclaredMethod("get", DataType.class, DataOrder.class, DataTransformation.class));
+            if (((IntegerPropertyType) type).isSigned()) {
+                return new MethodReference(READER_CLASS, READER_CLASS.getDeclaredMethod("get", DataType.class, DataOrder.class, DataTransformation.class));
+            } else {
+                return new MethodReference(READER_CLASS, READER_CLASS.getDeclaredMethod("getUnsigned", DataType.class, DataOrder.class, DataTransformation.class));
+            }
         } else {
             Class<?> dataType = type.getType();
             if (dataType == String.class) {

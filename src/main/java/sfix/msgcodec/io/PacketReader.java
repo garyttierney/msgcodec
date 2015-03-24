@@ -1,5 +1,6 @@
 package sfix.msgcodec.io;
 
+import com.google.common.base.Preconditions;
 import io.netty.buffer.ByteBuf;
 
 /**
@@ -83,5 +84,36 @@ public class PacketReader {
             throw new IllegalArgumentException("Unknown order.");
         }
         return longValue;
+    }
+
+    /**
+     * Gets an unsigned data type from the buffer with the specified order and transformation.
+     *
+     * @param type The data type.
+     * @param order The byte order.
+     * @param transformation The data transformation.
+     * @return The value.
+     * @throws IllegalStateException If this reader is not in byte access mode.
+     * @throws IllegalArgumentException If the combination is invalid.
+     */
+    public long getUnsigned(DataType type, DataOrder order, DataTransformation transformation) {
+        long longValue = get(type, order, transformation);
+        Preconditions.checkArgument(type != DataType.LONG, "Longs must be read as a signed type.");
+        return longValue & 0xFFFFFFFFFFFFFFFFL;
+    }
+
+    /**
+     * Reads a string from the specified {@link ByteBuf}.
+     *
+     * @param buffer The buffer.
+     * @return The string.
+     */
+    public String getString() {
+        StringBuilder builder = new StringBuilder();
+        int character;
+        while (buffer.isReadable() && (character = buffer.readUnsignedByte()) != DataConstants.STRING_TERMINATOR) {
+            builder.append((char) character);
+        }
+        return builder.toString();
     }
 }

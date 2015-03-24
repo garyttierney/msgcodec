@@ -37,7 +37,10 @@ public class ASM5MessageSerializerFactory implements MessageSerializerFactory {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
         CheckClassAdapter.verify(new ClassReader(classBytes), false, pw);
-        System.out.println(sw.toString());
+        String errors = sw.toString();
+        if (errors.length() > 0) {
+            throw new MessageSerializerFactoryException("Unable to create MessageDeserializer instance, bytecode errors: \n " + errors);
+        }
 
         Class<?> clazz = classLoader.defineClassProxy(deserializerClassName, classBytes, 0, classBytes.length);
         try {
