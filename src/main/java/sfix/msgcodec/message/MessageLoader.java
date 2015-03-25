@@ -2,9 +2,8 @@ package sfix.msgcodec.message;
 
 import sfix.msgcodec.message.node.MessageNode;
 
-import java.io.IOException;
 import java.util.Collection;
 
 public interface MessageLoader {
-    Collection<MessageNode> load() throws MessageLoaderException, IOException;
+    Collection<MessageNode> load() throws MessageLoaderException;
 }
