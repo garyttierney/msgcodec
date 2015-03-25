@@ -27,10 +27,17 @@ public class PacketMethodReferenceResolver {
 
     public static MethodReference getWriteMethod(PropertyType type) throws NoSuchMethodException, ClassNotFoundException {
         if (type instanceof IntegerPropertyType) {
-            return new MethodReference(
-                BUILDER_CLASS,
-                BUILDER_CLASS.getDeclaredMethod("put", DataType.class, DataOrder.class,DataTransformation.class, Number.class)
-            );
+            if(((IntegerPropertyType) type).isSigned()) {
+                return new MethodReference(
+                    BUILDER_CLASS,
+                    BUILDER_CLASS.getDeclaredMethod("put", DataType.class, DataOrder.class, DataTransformation.class, Number.class)
+                );
+            } else {
+                return new MethodReference(
+                    BUILDER_CLASS,
+                    BUILDER_CLASS.getDeclaredMethod("putUnsigned", DataType.class, DataOrder.class, DataTransformation.class, Number.class)
+                );
+            }
         } else {
             Class<?> dataType = type.getType();
             if (dataType == String.class) {

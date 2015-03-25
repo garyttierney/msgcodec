@@ -105,7 +105,6 @@ public class PacketReader {
     /**
      * Reads a string from the specified {@link ByteBuf}.
      *
-     * @param buffer The buffer.
      * @return The string.
      */
     public String getString() {
