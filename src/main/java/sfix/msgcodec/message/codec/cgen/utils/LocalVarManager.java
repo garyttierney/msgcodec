@@ -11,7 +11,7 @@ import java.util.Set;
 /**
  * A class responsible for managing the LocalVariables and parameters of a method.
  */
-public class LocalVarManager {
+public final class LocalVarManager {
     private final MethodVisitor methodVisitor;
     private final Label methodStartLabel;
     private final Label methodEndLabel;
@@ -142,11 +142,7 @@ public class LocalVarManager {
         push(entry);
     }
 
-    public int getSlot(String name) {
-        return findByName(name).slot;
-    }
-
-    public final LocalVarEntry findBySlot(int slot) {
+    public LocalVarEntry findBySlot(int slot) {
         for (LocalVarEntry entry : localVarEntries) {
             if (entry.slot == slot) {
                 return entry;
@@ -156,7 +152,7 @@ public class LocalVarManager {
         return null;
     }
 
-    public final LocalVarEntry findByName(String name) {
+    public LocalVarEntry findByName(String name) {
         for (LocalVarEntry entry : localVarEntries) {
             if (entry.name.equals(name)) {
                 return entry;
@@ -179,7 +175,7 @@ public class LocalVarManager {
         }
     }
 
-    static class LocalVarEntry {
+    public static class LocalVarEntry {
         protected String name;
         protected Class<?> type;
         protected int slot;

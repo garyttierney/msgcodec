@@ -8,7 +8,7 @@ import sfix.msgcodec.io.DataOrder;
 import sfix.msgcodec.io.DataTransformation;
 import sfix.msgcodec.io.DataType;
 import sfix.msgcodec.io.PacketReader;
-import sfix.msgcodec.message.codec.cgen.utils.ASMUtils;
+import sfix.msgcodec.message.utils.MessageUtils;
 import sfix.msgcodec.message.codec.cgen.utils.LocalVarManager;
 import sfix.msgcodec.message.node.*;
 import sfix.msgcodec.message.property.ArrayPropertyType;
@@ -145,7 +145,7 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
                 methodWriter.visitVarInsn(ALOAD, MESSAGE_SLOT);
                 localVarManager.push(slot); // push back to stack
 
-                PropertyDescriptor descriptor = ASMUtils.getPropertyDescriptor(messageInfo, node.getIdentifier());
+                PropertyDescriptor descriptor = MessageUtils.getPropertyDescriptor(messageInfo, node.getIdentifier());
                 Method writeMethod = descriptor.getWriteMethod();
 
                 // call setter with local var
@@ -213,7 +213,7 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
         pushArrayLength(type.getLengthSpecifier());
 
         if (elementType instanceof IntegerPropertyType) {
-            methodWriter.visitIntInsn(NEWARRAY, ASMUtils.getIntegerArrayType(elementType.getType()));
+            methodWriter.visitIntInsn(NEWARRAY, MessageUtils.getIntegerArrayType(elementType.getType()));
         } else {
             methodWriter.visitTypeInsn(ANEWARRAY, Type.getInternalName(elementType.getType()));
         }
@@ -252,14 +252,8 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
             localVarManager.push(counterSlot);
             localVarManager.push(elementSlot);
 
-            if (elementType instanceof IntegerPropertyType) {
-                methodWriter.visitInsn(ASMUtils.getIntegerArrayStoreInsn(elementType.getType()));
-            } else {
-                methodWriter.visitInsn(AASTORE);
-            }
-
+            methodWriter.visitInsn(Type.getType(elementType.getType()).getOpcode(IASTORE));
             methodWriter.visitIincInsn(counterSlot, 1);
-
         }
 
         { // counter < length
@@ -275,7 +269,7 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
         methodWriter.visitVarInsn(ALOAD, MESSAGE_SLOT);
         localVarManager.push(slot); // push back to stack
 
-        PropertyDescriptor descriptor = ASMUtils.getPropertyDescriptor(messageInfo, node.getIdentifier());
+        PropertyDescriptor descriptor = MessageUtils.getPropertyDescriptor(messageInfo, node.getIdentifier());
         Method writeMethod = descriptor.getWriteMethod();
 
         // call setter with local var
@@ -307,7 +301,7 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
         localVarManager.store(slot);
 
         for (PropertyNode child : node.getChildren()) {
-            PropertyDescriptor propertyDescriptor = ASMUtils.getPropertyDescriptor(Introspector.getBeanInfo(compoundObjectClass), child.getIdentifier());
+            PropertyDescriptor propertyDescriptor = MessageUtils.getPropertyDescriptor(Introspector.getBeanInfo(compoundObjectClass), child.getIdentifier());
             Method writeMethod = propertyDescriptor.getWriteMethod();
 
             int childSlot = localVarManager.getOrAllocate(getChildPropertyName(node, child), child.getType().getType());
