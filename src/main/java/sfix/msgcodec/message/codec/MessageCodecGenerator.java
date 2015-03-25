@@ -1,19 +1,15 @@
 package sfix.msgcodec.message.codec;
 
+import org.parboiled.Parboiled;
+import sfix.msgcodec.message.DefaultMessageLoader;
+import sfix.msgcodec.message.MessageLoader;
+import sfix.msgcodec.message.MessageLoaderException;
 import sfix.msgcodec.message.node.AttributeType;
 import sfix.msgcodec.message.node.MessageNode;
 import sfix.msgcodec.message.parser.MessageParser;
-import org.parboiled.Parboiled;
-import org.parboiled.parserunners.ParseRunner;
-import org.parboiled.parserunners.RecoveringParseRunner;
-import org.parboiled.support.ParsingResult;
 
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -24,28 +20,6 @@ import java.util.Set;
  */
 public class MessageCodecGenerator {
 
-    /**
-     * FileVisitor for walking a directory structure and finding message configuration files.
-     */
-    private static class MessageConfigFileVisitor extends SimpleFileVisitor<Path> {
-        public Set<Path> messageConfigPaths = new HashSet<>();
-
-        @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-            messageConfigPaths.add(file);
-
-            return FileVisitResult.CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attrs) throws IOException {
-            return FileVisitResult.CONTINUE;
-        }
-
-        public Set<Path> getMessageConfigPaths() {
-            return messageConfigPaths;
-        }
-    }
 
     /**
      * The message configuration parser instance.
@@ -58,58 +32,65 @@ public class MessageCodecGenerator {
     private final MessageSerializerFactory messageSerializerFactory;
 
     /**
-     * A set of files to be parsed by the {@link MessageParser}.
+     * The MessageLoader implementation responsible for loading a collection of {@link MessageNode}s.
      */
-    private final Set<Path> messageConfigPaths = new HashSet<>();
+    private final MessageLoader messageLoader;
 
     /**
-     * Create a new {@link MessageCodec} generator using <code>messageConfigPath</code> as a search path for message configuration files,
-     * and <code>messageSerializerFactory</code> as the factory for creating message (de)serializers.
+     * Create a new {@link MessageCodec} generator using the {@link DefaultMessageLoader} implementation and <code>messageConfigPath</code> as a search path for message configuration files,
+     * with <code>messageSerializerFactory</code> as the factory for creating message (de)serializers.
      *
      * @param messageSerializerFactory The message serializer factory responsible for creating message serializers and deserializers.
      * @param messageConfigPath The path to search for message configuration files.
      *
      * @throws IOException If an error occurred when searching the message configuration path.
+     */
+    public MessageCodecGenerator(MessageSerializerFactory messageSerializerFactory, Path messageConfigPath) throws IOException {
+        this(messageSerializerFactory, new DefaultMessageLoader(messageConfigPath));
+    }
+
+    /**
+     * Create a new {@link MessageCodec} generator using the specified MessageLoader and MessageSerializerFactory.
+     *
+     * @param messageSerializerFactory The {@link MessageSerializerFactory} to use for generating {@link MessageSerializer} and {@link MessageDeserializer}
+     *                                 implentations.
+     * @param messageLoader The MessageLoader to use for loading {@link MessageNode}s
+     *
      * @see sfix.msgcodec.message.codec.cgen.ASM5MessageSerializerFactory
      * @see sfix.msgcodec.message.codec.reflection.ReflectionMessageSerializerFactory
      */
-    public MessageCodecGenerator(MessageSerializerFactory messageSerializerFactory, Path messageConfigPath) throws IOException {
-        MessageConfigFileVisitor configFileVisitor = new MessageConfigFileVisitor();
-        Files.walkFileTree(messageConfigPath, configFileVisitor);
-
-        this.messageConfigPaths.addAll(configFileVisitor.getMessageConfigPaths());
+    public MessageCodecGenerator(MessageSerializerFactory messageSerializerFactory, MessageLoader messageLoader) {
         this.messageSerializerFactory = messageSerializerFactory;
+        this.messageLoader = messageLoader;
     }
 
     public <D> MessageCodec<D> generate(MessageDiscriminatorStrategy<D> discriminatorStrategy) throws MessageCodecGeneratorException {
-        ParseRunner<MessageNode> parseRunner = new RecoveringParseRunner<>(messageParser.messageNode());
-
         final Map<D, MessageDeserializer> deserializerMap = new HashMap<>();
         final Map<Class<?>, MessageSerializer> serializerMap = new HashMap<>();
 
-        for (Path configPath : messageConfigPaths) {
+        final Set<MessageNode> messageNodes = new HashSet<>();
+        try {
+            messageNodes.addAll(messageLoader.load());
+        } catch (MessageLoaderException ex) {
+            throw new MessageCodecGeneratorException("Unable to load a collection of MessageNodes to generate serilization classes for", ex);
+        }
+
+        for (MessageNode node : messageNodes) {
+            if (!node.hasAttribute("type")) {
+                throw new MessageCodecGeneratorException("Message configuration file for \"" + node.getIdentifier() + "\" does not have a \"type\" attribute");
+            }
+
+            if (!node.hasAttribute("opcode") || node.getAttribute("opcode").getType() != AttributeType.NUMBER_LITERAL) {
+                throw new MessageCodecGeneratorException("Message configuration file for \"" + node.getIdentifier() + "\" does not have a valid \"opcode\" attribute");
+            }
+
+            D discriminator = discriminatorStrategy.getDiscriminator(node);
+
             try {
-                ParsingResult<MessageNode> messageParsingResult = parseRunner.run((CharSequence) new String(Files.readAllBytes(configPath)));
-                MessageNode node = messageParsingResult.resultValue;
-                if (!node.hasAttribute("type")) {
-                    throw new MessageCodecGeneratorException("Message configuration file for \"" + node.getIdentifier() + "\" does not have a \"type\" attribute");
-                }
-
-                if (!node.hasAttribute("opcode") || node.getAttribute("opcode").getType() != AttributeType.NUMBER_LITERAL) {
-                    throw new MessageCodecGeneratorException("Message configuration file for \"" + node.getIdentifier() + "\" does not have a valid \"opcode\" attribute");
-                }
-
-                D discriminator = discriminatorStrategy.getDiscriminator(node);
-
-                try {
-                    serializerMap.put(Class.forName(node.getIdentifier()), messageSerializerFactory.createSerializer(node));
-                    deserializerMap.put(discriminator, messageSerializerFactory.createDeserializer(node));
-                } catch (Exception ex) {
-                    throw new MessageCodecGeneratorException("Error occurred when creating serializer or deserializer for \"" + node.getIdentifier() + "\"", ex);
-                }
-
-            } catch (IOException e) {
-                throw new MessageCodecGeneratorException("Unable to read message config file \"" + configPath.toString() + "\"", e);
+                serializerMap.put(Class.forName(node.getIdentifier()), messageSerializerFactory.createSerializer(node));
+                deserializerMap.put(discriminator, messageSerializerFactory.createDeserializer(node));
+            } catch (Exception ex) {
+                throw new MessageCodecGeneratorException("Error occurred when creating serializer or deserializer for \"" + node.getIdentifier() + "\"", ex);
             }
         }
 

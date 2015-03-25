@@ -4,6 +4,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 /**
+ * A class which assists in writing a packet to a ByteBuf.
+ *
  * @author Graham <grahamedgecombe.com>
  */
 public class PacketBuilder {
