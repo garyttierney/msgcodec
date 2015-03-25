@@ -1,24 +1,22 @@
 package sfix.msgcodec.message.node;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MessageNode {
+    /**
+     * The AttributeNode list for this MessageNode.
+     */
+    private final List<AttributeNode> attributeList = new ArrayList<>();
+
     /**
      * An ordered list of property nodes.
      */
     private final LinkedList<PropertyNode> propertyList = new LinkedList<>();
+
     /**
      * The Message class this MessageNode represents.
      */
     private String messageIdentifier;
-    /**
-     * A mapping of attribute identifiers to {@link AttributeNode} instances.
-     */
-    private Map<String, AttributeNode> attributeNodeMap = new HashMap<>();
-    private List<AttributeNode> attributeList;
 
     /**
      * Accept a {@link MessageNodeVisitor} and iterate call the {@link MessageNodeVisitor#visit} methods on this object and all of its properties.
@@ -71,17 +69,6 @@ public class MessageNode {
         return true;
     }
 
-
-    /**
-     * Parser action to add a new {@link AttributeNode} to the attribute map.
-     *
-     * @param attributeNode The attribute node to add.
-     */
-    public boolean addAttribute(AttributeNode attributeNode) {
-        this.attributeNodeMap.put(attributeNode.getIdentifier(), attributeNode);
-        return true;
-    }
-
     /**
      * Checks if a attribute with the specified identifier is available.
      *
@@ -89,7 +76,13 @@ public class MessageNode {
      * @return True if the attribute exists, false otherwise.
      */
     public boolean hasAttribute(String identifier) {
-        return attributeNodeMap.containsKey(identifier);
+        for(AttributeNode node : attributeList) {
+            if(node.getIdentifier().equals(identifier)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -99,15 +92,26 @@ public class MessageNode {
      * @return The attribute node.
      */
     public AttributeNode getAttribute(String identifier) {
-        return attributeNodeMap.get(identifier);
+        for(AttributeNode node : attributeList) {
+            if(node.getIdentifier().equals(identifier)) {
+                return node;
+            }
+        }
+
+        return null;
     }
 
+    /**
+     * Parser action to set this <code>MessageNode</code>s attribute list.
+     *
+     * @param attributeList The list of <code>AttributeNode</code>s to add.
+     */
     public boolean setAttributeList(List<AttributeNode> attributeList) {
-        this.attributeList = attributeList;
+        this.attributeList.addAll(attributeList);
         return true;
     }
 
     public List<AttributeNode> getAttributeList() {
-        return attributeList;
+        return Collections.unmodifiableList(attributeList);
     }
 }
