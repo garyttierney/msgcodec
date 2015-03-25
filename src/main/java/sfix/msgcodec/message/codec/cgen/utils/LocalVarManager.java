@@ -108,7 +108,7 @@ public class LocalVarManager {
      * @param entry The entry to store the value in.
      */
     public void store(LocalVarEntry entry) {
-        methodVisitor.visitVarInsn(Type.getType(entry.type).getOpcode(Opcodes.IASTORE), entry.slot);
+        methodVisitor.visitVarInsn(Type.getType(entry.type).getOpcode(Opcodes.ISTORE), entry.slot);
     }
 
     /**
@@ -117,7 +117,7 @@ public class LocalVarManager {
      * @param entry The entry to push to the stack.
      */
     public void push(LocalVarEntry entry) {
-        methodVisitor.visitVarInsn(Type.getType(entry.type).getOpcode(Opcodes.IALOAD), entry.slot);
+        methodVisitor.visitVarInsn(Type.getType(entry.type).getOpcode(Opcodes.ILOAD), entry.slot);
     }
 
     /**
