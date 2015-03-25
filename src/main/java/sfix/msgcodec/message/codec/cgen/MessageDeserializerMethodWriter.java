@@ -208,6 +208,20 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
         localVarManager.store(slot);
     }
 
+    public static int getIntegerArrayType(Class<?> type) {
+        if (type == int.class) {
+            return T_INT;
+        } else if (type == short.class) {
+            return T_SHORT;
+        } else if (type == byte.class) {
+            return T_BYTE;
+        } else if (type == long.class) {
+            return T_LONG;
+        }
+
+        return -1;
+    }
+    
     public void visitArrayPropertyNode(PropertyNode node, ArrayPropertyType type) throws ClassNotFoundException, IntrospectionException, NoSuchMethodException {
         Class<?> valueType = type.getType();
         PropertyType elementType = type.getElementType();
@@ -215,7 +229,7 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
         pushArrayLength(type.getLengthSpecifier());
 
         if (elementType instanceof IntegerPropertyType) {
-            methodWriter.visitIntInsn(NEWARRAY, MessageUtils.getIntegerArrayType(elementType.getType()));
+            methodWriter.visitIntInsn(NEWARRAY, getIntegerArrayType(elementType.getType()));
         } else {
             methodWriter.visitTypeInsn(ANEWARRAY, Type.getInternalName(elementType.getType()));
         }
