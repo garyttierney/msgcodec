@@ -17,7 +17,7 @@ public class YamlMessageParser {
         MessageNode messageNode = new MessageNode();
 
         messageNode.setAttributeList(parseYamlAttributeList(yamlObject));
-
+        return null;
     }
 
     public List<AttributeNode> parseYamlAttributeList(Map<String, Object> yamlObject) {
