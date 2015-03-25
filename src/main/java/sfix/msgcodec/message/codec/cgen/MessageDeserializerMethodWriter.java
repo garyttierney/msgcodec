@@ -8,6 +8,8 @@ import sfix.msgcodec.io.DataOrder;
 import sfix.msgcodec.io.DataTransformation;
 import sfix.msgcodec.io.DataType;
 import sfix.msgcodec.io.PacketReader;
+import sfix.msgcodec.message.codec.cgen.utils.MethodReference;
+import sfix.msgcodec.message.codec.cgen.utils.PacketMethodReferenceResolver;
 import sfix.msgcodec.message.utils.MessageUtils;
 import sfix.msgcodec.message.codec.cgen.utils.LocalVarManager;
 import sfix.msgcodec.message.node.*;

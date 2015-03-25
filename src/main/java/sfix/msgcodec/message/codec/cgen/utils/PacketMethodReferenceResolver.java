@@ -1,4 +1,4 @@
-package sfix.msgcodec.message.codec.cgen;
+package sfix.msgcodec.message.codec.cgen.utils;
 
 import sfix.msgcodec.io.*;
 import sfix.msgcodec.message.property.IntegerPropertyType;

@@ -81,16 +81,10 @@ public class MessageCodecGenerator {
         this.messageSerializerFactory = messageSerializerFactory;
     }
 
-    /**
-     * Generate MessageCodec using an integer attribute named "opcode" as the message discriminator.
-     *
-     * @return An instance of MessageCodec with an Integer as the discriminator.
-     * @throws MessageCodecGeneratorException If an error occurred when generating the MessageCodec.
-     */
-    public MessageCodec<Integer> generate() throws MessageCodecGeneratorException {
+    public <D> MessageCodec<D> generate(MessageDiscriminatorStrategy<D> discriminatorStrategy) throws MessageCodecGeneratorException {
         ParseRunner<MessageNode> parseRunner = new RecoveringParseRunner<>(messageParser.messageNode());
 
-        final Map<Integer, MessageDeserializer> deserializerMap = new HashMap<>();
+        final Map<D, MessageDeserializer> deserializerMap = new HashMap<>();
         final Map<Class<?>, MessageSerializer> serializerMap = new HashMap<>();
 
         for (Path configPath : messageConfigPaths) {
@@ -105,17 +99,11 @@ public class MessageCodecGenerator {
                     throw new MessageCodecGeneratorException("Message configuration file for \"" + node.getIdentifier() + "\" does not have a valid \"opcode\" attribute");
                 }
 
-                String type = node.getAttribute("type").getValue();
-                int opcode = Integer.valueOf(node.getAttribute("opcode").getValue());
+                D discriminator = discriminatorStrategy.getDiscriminator(node);
 
                 try {
-                    if (type.equalsIgnoreCase("outgoing")) {
-                        serializerMap.put(Class.forName(node.getIdentifier()), messageSerializerFactory.createSerializer(node));
-                    } else if (type.equalsIgnoreCase("incoming")) {
-                        deserializerMap.put(opcode, messageSerializerFactory.createDeserializer(node));
-                    } else {
-                        throw new MessageCodecGeneratorException("Got an unknown type \"" + type + "\" for message \"" + node.getIdentifier() + "\"");
-                    }
+                    serializerMap.put(Class.forName(node.getIdentifier()), messageSerializerFactory.createSerializer(node));
+                    deserializerMap.put(discriminator, messageSerializerFactory.createDeserializer(node));
                 } catch (Exception ex) {
                     throw new MessageCodecGeneratorException("Error occurred when creating serializer or deserializer for \"" + node.getIdentifier() + "\"", ex);
                 }
@@ -126,5 +114,16 @@ public class MessageCodecGenerator {
         }
 
         return new MessageCodec<>(deserializerMap, serializerMap);
+
+    }
+
+    /**
+     * Generate MessageCodec using an integer attribute named "opcode" as the message discriminator.
+     *
+     * @return An instance of MessageCodec with an Integer as the discriminator.
+     * @throws MessageCodecGeneratorException If an error occurred when generating the MessageCodec.
+     */
+    public MessageCodec<Class<?>> generate() throws MessageCodecGeneratorException {
+        return generate(new MessageClassDiscriminatorStrategy());
     }
 }

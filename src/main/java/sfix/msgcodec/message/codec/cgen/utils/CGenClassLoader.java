@@ -1,4 +1,4 @@
-package sfix.msgcodec.message.codec.cgen;
+package sfix.msgcodec.message.codec.cgen.utils;
 
 /**
  * Class loader proxy for exposing the {@link ClassLoader#defineClass} method to define classes on the fly.

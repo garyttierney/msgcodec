@@ -7,6 +7,7 @@ import sfix.msgcodec.message.codec.MessageDeserializer;
 import sfix.msgcodec.message.codec.MessageSerializer;
 import sfix.msgcodec.message.codec.MessageSerializerFactory;
 import sfix.msgcodec.message.codec.MessageSerializerFactoryException;
+import sfix.msgcodec.message.codec.cgen.utils.CGenClassLoader;
 import sfix.msgcodec.message.node.MessageNode;
 import sfix.msgcodec.message.node.MessageNodeVisitorException;
 
