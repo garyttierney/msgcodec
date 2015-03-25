@@ -9,7 +9,7 @@ import sfix.msgcodec.io.DataTransformation;
 import sfix.msgcodec.io.DataType;
 import sfix.msgcodec.io.PacketReader;
 import sfix.msgcodec.message.codec.cgen.utils.MethodReference;
-import sfix.msgcodec.message.codec.cgen.utils.PacketMethodReferenceResolver;
+import sfix.msgcodec.message.codec.cgen.utils.PacketBufferMethodResolver;
 import sfix.msgcodec.message.utils.MessageUtils;
 import sfix.msgcodec.message.codec.cgen.utils.LocalVarManager;
 import sfix.msgcodec.message.node.*;
@@ -166,7 +166,7 @@ public class MessageDeserializerMethodWriter implements MessageNodeVisitor {
     }
 
     public void readAndStoreVar(int slot, PropertyType type) throws NoSuchMethodException, ClassNotFoundException {
-        MethodReference ref = PacketMethodReferenceResolver.getReadMethod(type);
+        MethodReference ref = PacketBufferMethodResolver.getReadMethod(type);
         Method method = ref.getMethod();
 
         methodWriter.visitVarInsn(ALOAD, READER_SLOT);

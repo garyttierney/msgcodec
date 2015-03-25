@@ -4,7 +4,7 @@ import sfix.msgcodec.io.*;
 import sfix.msgcodec.message.property.IntegerPropertyType;
 import sfix.msgcodec.message.property.PropertyType;
 
-public class PacketMethodReferenceResolver {
+public class PacketBufferMethodResolver {
     private static final Class<PacketReader> READER_CLASS = PacketReader.class;
     private static final Class<PacketBuilder> BUILDER_CLASS = PacketBuilder.class;
 
