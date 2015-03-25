@@ -1,0 +1,42 @@
+* e73c9cc Renaming PacketMethodReferenceResolver -> PacketBufferMethodResolver
+* 532d188 Adding support for writing unsigned types to PacketMethodReferenceResolver
+* 6758e76 Abstract the functionality which determines the identifier of a message and how to differentiate it from another message
+* 6e32c40 +1 to me for discovering i can refactor out nasty conditionals with getOpcode() calls
+* 3bc2c36 Meant istore and iload, not iastore and iaload
+* f5a8d66 Updating MessageNode to use new attribute list and refactoring LocalVarManager to use getOpcode in the Type class, also adding documentation to ArrayPropertyType and LocalVarManager
+* 997a32d Moving attribute list parsing into a separate method and fixing the messageNode unit test. Resolves #6.
+* 96931f4 add better error handling to ASM5MessageSerializerFactory and add support for reading strings and unsigned integers, refs #2
+* 57cebf7 fix attributeNode rule, resolves #4
+* c76103f fixing intType rule, refs #4
+* 41fa6ca fixing parser for multiple message nodes
+* 8014528 Got tests passing for new PacketReader code
+* 4a3c31f add documentation to all high level APIs, resolves #1
+* a7d356f started supported for apollo packetreader types in bytecode generated message deserializers, refs #2
+* 31dace5 better documentation on the codec classes, refs #1
+* 03507ba repackaging
+* a828aa9 moving packages
+* ef24496 adding package-info for apollo classes, refs #2
+* 08c992d Creating new branch for apollo changes and fixing the parser, was using the value stack incorrectly
+* f304382 Cleaning up a lot of code, pretty sure it isnt compiling at the moment
+* 624f28c Adding support for int type endianness and copying over GamePacketReader/Builder classes from Apollo.
+* ac2a586 changing type of child property collection in CompoundPropertyNode to fix ordering, resolves #3
+* 04d5ea0 getting rid of more debug code
+* 9ecafe2 Reverting changes to property descriptor code
+* 459e3ee Fixing compound array types and updating property descriptor code + tests
+* 93b0578 Fixed array property types
+* 5181b5e Fixing the LocalVarManager implementation for integer types other than a 32 bit int and updating tests.
+* d2acb64 Fixing tests that were passing due to parboiled being crazy and recovering from parse errors
+* c3e3e84 Adding license
+* bfdffab Get rid of dirty 8 space continued indent
+* 405f7ed Some misc. test cleanups
+* fa0597d Some documentation, clean up, and getting tests passing
+* bc03224 Removing more debug code
+* 3b2b9ac Remove debug code
+* 7f26781 Wired up deserialization of integer properties and got tests passing for that single case.
+* e95d74a Cleaning up the message deserializer method generator and removing a lot of duplicated code
+* 666f681 Cleaning up local variable management code and more work on arrays
+* 27f27a7 Done most of the work on implementing integer deserialization. Haven't bothered with any of jagex' exotic types but deserializing standard fixed-width integers should be fine.
+* 2f03267 Oops, MessageNode wasn't collecting PropertyNodes from the stack
+* 1b7b1db Wired up majority of the parsing, just to test the message node and have begun work on bytecode generation
+* 53dd11a Implemented arrays of properties, still to do compound / object properties
+* 2c64f1c Initial commit, wrote some unit tests for the parser and got most things hooked up
